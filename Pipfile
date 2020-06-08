@@ -12,6 +12,11 @@ django = "*"
 djangorestframework = "*"
 djangorestframework-simplejwt = "*"
 drf-yasg = "*"
+django-cors-headers = "*"
+django-constance = "*"
+django-picklefield = "*"
+python-dotenv = "*"
+djongo = "*"
 
 [requires]
 python_version = "3.8"

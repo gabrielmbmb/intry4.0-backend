@@ -11,6 +11,12 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+from dotenv import load_dotenv
+
+ENV_PATH = ".env"
+
+if os.path.exists(ENV_PATH):
+    load_dotenv(ENV_PATH)
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -23,9 +29,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = "c1a0fygs!-z(b87+rr(eb27$fturb*jwtf+x#mwg3znh4b=%+y"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split()
 
 
 # Application definition
@@ -39,12 +45,17 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "drf_yasg",
+    "constance",
+    "constance.backends.database",
+    "corsheaders",
     "backend.apps.users",
+    "backend.apps.datamodel",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -78,8 +89,13 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+        "ENGINE": os.environ.get("DJANGO_DB_ENGINE", "django.db.backends.sqlite3"),
+        "NAME": os.environ.get("DJANGO_DB_NAME", "db.sqlite"),
+        "USER": os.environ.get("DJANGO_DB_USER", ""),
+        "PASSWORD": os.environ.get("DJANGO_DB_PASSWORD", ""),
+        "HOST": os.environ.get("DJANGO_DB_HOST", None),
+        "PORT": os.environ.get("DJANGO_DB_PORT", None),
+        "CONN_MAX_AGE": 600,
     }
 }
 
@@ -123,3 +139,18 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication"
     ],
 }
+
+CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
+
+CONSTANCE_CONFIG = {
+    "BLACKBOX_HOST": ("localhost", "Anomaly detection host"),
+    "BLACKBOX_PORT": (5678, "Anomaly detection port"),
+    "CRATE_HOST": ("localhost", "CrateDB host"),
+    "CRATE_PORT": (5432, "CrateDB port"),
+    "ORION_HOST": ("localhost", "Orion host"),
+    "ORION_PORT": (1026, "Orion port"),
+    "FIWARE_SERVICE": ("intry", "FIWARE Service"),
+    "FIWARE_SERVICEPATH": ("/", "FIWARE Service Path"),
+}
+
+CORS_ORIGIN_ALLOW_ALL = True
