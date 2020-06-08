@@ -2,6 +2,18 @@ from rest_framework import serializers
 from backend.apps.users.models import User
 
 
+def check_password(password, password2):
+    """
+    Checks if the password and password confirmation are the same and are provided.
+
+    Raises:
+        rest_framework.serializes.ValidationError: if the passwords are not the same or
+            any is not provided.
+    """
+    if not password or not password2 or password != password2:
+        raise serializers.ValidationError("The passwords did not match!")
+
+
 class RegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=128, min_length=8, write_only=True)
     password2 = serializers.CharField(max_length=128, min_length=8, write_only=True)
@@ -13,12 +25,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
     def validate(self, data):
         password = data.get("password", None)
         password2 = data.get("password2", None)
-
-        if not password or not password2:
-            raise serializers.ValidationError("Please, enter a password and confirm it")
-
-        if password != password2:
-            raise serializers.ValidationError("The passwords did not match!")
+        check_password(password, password2)
 
         return data
 
@@ -33,7 +40,16 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["email", "username", "name", "lastname", "password"]
+        fields = [
+            "id",
+            "email",
+            "username",
+            "name",
+            "lastname",
+            "password",
+            "is_active",
+            "is_staff",
+        ]
 
     def update(self, instance, validated_data):
         """Updates user data."""
@@ -48,6 +64,30 @@ class UserSerializer(serializers.ModelSerializer):
         if password is not None:
             instance.set_password(password)
 
+        instance.save()
+
+        return instance
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    """Serializer for user password change."""
+
+    model = User
+    old_password = serializers.CharField(max_length=128, min_length=8)
+    password = serializers.CharField(max_length=128, min_length=8)
+    password2 = serializers.CharField(max_length=128, min_length=8)
+
+    def validate(self, data):
+        password = data.get("password", None)
+        password2 = data.get("password2", None)
+        check_password(password, password2)
+
+        return data
+
+    def update(self, instance, validated_data):
+        """Changes the user password."""
+        password = validated_data.get("password", None)
+        instance.set_password(password)
         instance.save()
 
         return instance

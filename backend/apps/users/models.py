@@ -7,9 +7,7 @@ from django.contrib.auth.models import (
 
 
 class UserManager(BaseUserManager):
-    """
-    Custom user manager required to create custom users.
-    """
+    """Custom user manager required to create custom users."""
 
     def create_user(self, username, email, password=None, **kwargs):
         """
