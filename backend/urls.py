@@ -40,6 +40,10 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # users
     re_path("^api/v1/", include("backend.apps.users.urls")),
+    # entities
+    re_path("^api/v1/", include("backend.apps.entities.urls")),
+    # datamodel
+    re_path("^api/v1/", include("backend.apps.datamodel.urls")),
     # JWT Auth
     path("api/v1/token/", TokenObtainPairView.as_view(), name="token-obtain-pair"),
     path("api/v1/token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
