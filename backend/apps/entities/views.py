@@ -2,7 +2,7 @@ from typing import List
 from rest_framework import status, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from backend.apps.entities.clients import OrionClient
+from backend.apps.core.clients import OrionClient
 
 
 def get_entity_attributes(entity: dict) -> List[str]:

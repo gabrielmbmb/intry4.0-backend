@@ -1,6 +1,9 @@
+import logging
 import requests
 from constance import config
 from rest_framework.exceptions import APIException
+
+logger = logging.getLogger(__name__)
 
 
 class OrionClient(object):
@@ -57,9 +60,15 @@ class OrionClient(object):
         try:
             response = requests.get(url=url, headers=headers)
         except (requests.ConnectionError, requests.Timeout) as e:
+            logger.error(
+                f"Could not connect with Orion Context Broker at {self.orion_host}:{self.orion_port}"
+            )
             raise OrionNotAvailable() from e
 
         return response.json()
+
+    def create_subscription(self, pattern: str, url: str):
+        pass
 
 
 class OrionNotAvailable(APIException):
@@ -68,3 +77,35 @@ class OrionNotAvailable(APIException):
     status_code = 504
     default_detail = "Unable to connect to Orion Context Broker"
     default_code = "unable_to_connect_ocb"
+
+
+class BlackboxClient(object):
+    """A client class to connect with the Blackbox Anomaly Detection API
+    
+    Args:
+        blackbox_host (str): the Blackbox host. If the argument is not passed,
+            the one from the Constance configuration will be taken. Defaults to None.
+        blackbox_port (str): the Blackbox port. If the argument is not passed,
+            the one from the Constance configuration will be taken. Defaults to None.
+    """
+
+    def __init__(
+        self, blackbox_host: str = None, blackbox_port: str = None,
+    ):
+        self.blackbox_host = blackbox_host if blackbox_host else config.BLACKBOX_HOST
+        self.blackbox_port = blackbox_port if blackbox_port else config.BLACKBOX_PORT
+
+    def create_model(self):
+        pass
+
+    def update_model(self):
+        pass
+
+    def delete_model(self):
+        pass
+
+    def train(self):
+        pass
+
+    def predict(self):
+        pass

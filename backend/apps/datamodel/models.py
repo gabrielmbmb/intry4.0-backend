@@ -1,35 +1,86 @@
+import logging
 from django.db import models
-from django.core.validators import int_list_validator
+from django.core.validators import (
+    int_list_validator,
+    MinValueValidator,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class DataModel(models.Model):
     """Class which holds everything related to a Blackbox Anomaly Detection model."""
 
     name = models.CharField(max_length=128, help_text="Model name")
-    is_training = models.BooleanField(default=False)
-    trained = models.BooleanField(default=False)
-    deployed = models.BooleanField(default=False)
-    date_trained = models.DateField(default=None, blank=True, null=True)
-    date_deployed = models.DateField(default=None, blank=True, null=True)
-    num_predictions = models.IntegerField(default=0)
+    is_training = models.BooleanField(
+        help_text="Wether the model is being trained or not", default=False,
+    )
+    trained = models.BooleanField(
+        help_text="Wether the model is trained or not", default=False
+    )
+    deployed = models.BooleanField(
+        help_text="Wether the model is deployed or not", default=False
+    )
+    date_trained = models.DateField(
+        help_text="Date the model was trained", default=None, blank=True, null=True
+    )
+    date_deployed = models.DateField(
+        help_text="Date the model was deployed", default=None, blank=True, null=True
+    )
+    num_predictions = models.IntegerField(
+        help_text="Number of predictions made by this model", default=0
+    )
+
+    def save(self, *args, **kwargs):
+        """Custom save method in order to create the model in the Anomaly Detection API
+        before saving it."""
+        logger.info("CREATING NEW MODEL")
+        super(DataModel, self).save(*args, **kwargs)
 
 
-class PCAMahanalobis(models.Model):
-    """Class which holds the parameters of the PCA Mahalanobis anomaly detection model."""
+class PLCModel(models.Model):
+    """Class which holds everything related to a PLC and its sensors."""
 
-    datamodel = models.ForeignKey(DataModel, on_delete=models.CASCADE)
-    n_components = models.IntegerField(
-        default=2, help_text="Numbers of components for the PCA algorithm"
+    datamodel = models.ForeignKey(
+        DataModel, related_name="plcs", on_delete=models.CASCADE
+    )
+    urn = models.CharField(
+        help_text="Uniform Resource Name of the PLC in Orion Context Broker",
+        max_length=256,
     )
 
 
-class Autoencoder(models.Model):
+class SensorModel(models.Model):
+    """Class which holds everything related to a sensor."""
+
+    plc = models.ForeignKey(PLCModel, related_name="sensors", on_delete=models.CASCADE)
+    name = models.CharField(help_text="Name of the sensor", max_length=256)
+
+
+class PCAMahalanobisModel(models.Model):
+    """Class which holds the parameters of the PCA Mahalanobis anomaly detection model."""
+
+    datamodel = models.OneToOneField(DataModel, on_delete=models.CASCADE)
+    n_components = models.IntegerField(
+        help_text="Numbers of components for the PCA algorithm",
+        default=2,
+        validators=[MinValueValidator(1)],
+    )
+
+
+class AutoencoderModel(models.Model):
     """Class which holds the parameters of the Autoencoder anomaly detection model."""
 
-    datamodel = models.ForeignKey(DataModel, on_delete=models.CASCADE)
+    datamodel = models.OneToOneField(DataModel, on_delete=models.CASCADE)
     hidden_neurons = models.CharField(
         help_text="Neural Network layers and the number of neurons in each layer",
-        validators=[int_list_validator],
+        validators=[
+            int_list_validator(
+                sep=",",
+                message="It should be a string with a list of integers separeted by a comma",
+                allow_negative=False,
+            )
+        ],
         default="32,16,16,32",
         max_length=128,
     )
@@ -111,10 +162,10 @@ class Autoencoder(models.Model):
     )
 
 
-class KMeans(models.Model):
+class KMeansModel(models.Model):
     """Class which holds the parameters of the KMeans anomaly detection model."""
 
-    datamodel = models.ForeignKey(DataModel, on_delete=models.CASCADE)
+    datamodel = models.OneToOneField(DataModel, on_delete=models.CASCADE)
     n_clusters = models.IntegerField(
         help_text="Number of clusters for the K-Means algorithm", null=True, blank=True,
     )
@@ -123,10 +174,10 @@ class KMeans(models.Model):
     )
 
 
-class OneClassSVM(models.Model):
+class OneClassSVMModel(models.Model):
     """Class which holds the parameters of the One Class SVM anomaly detection model."""
 
-    datamodel = models.ForeignKey(DataModel, on_delete=models.CASCADE)
+    datamodel = models.OneToOneField(DataModel, on_delete=models.CASCADE)
     kernel = models.CharField(
         help_text="Kernel type for One Class SVM",
         choices=[
@@ -166,21 +217,21 @@ class OneClassSVM(models.Model):
     )
 
 
-class GaussianDistribution(models.Model):
+class GaussianDistributionModel(models.Model):
     """Class which holds the parameters of the Gaussian Distribution anomaly detection
     model."""
 
-    datamodel = models.ForeignKey(DataModel, on_delete=models.CASCADE)
+    datamodel = models.OneToOneField(DataModel, on_delete=models.CASCADE)
     epsilon_candidates = models.IntegerField(
         help_text="Number of epsilon values that will be tested to find the best one",
         default=100000000,
     )
 
 
-class IsolationForest(models.Model):
+class IsolationForestModel(models.Model):
     """Class which holds the parameters of the Isolation Forest anomaly detection model."""
 
-    datamodel = models.ForeignKey(DataModel, on_delete=models.CASCADE)
+    datamodel = models.OneToOneField(DataModel, on_delete=models.CASCADE)
     n_estimators = models.IntegerField(
         help_text="The number of base estimators in the ensemble for Isolation "
         "Forest",
@@ -198,11 +249,11 @@ class IsolationForest(models.Model):
     )
 
 
-class LocalOutlierFactor(models.Model):
+class LocalOutlierFactorModel(models.Model):
     """Class which holds the parameters of the Local Outlier Factor anomaly detection
     model."""
 
-    datamodel = models.ForeignKey(DataModel, on_delete=models.CASCADE)
+    datamodel = models.OneToOneField(DataModel, on_delete=models.CASCADE)
     n_neighbors = models.IntegerField(
         help_text="Number of neighbors to use in LOF", default=20
     )
@@ -230,11 +281,11 @@ class LocalOutlierFactor(models.Model):
     )
 
 
-class KNN(models.Model):
+class KNNModel(models.Model):
     """Class which holds the parameters of the Local Outlier Factor anomaly detection
     model."""
 
-    datamodel = models.ForeignKey(DataModel, on_delete=models.CASCADE)
+    datamodel = models.OneToOneField(DataModel, on_delete=models.CASCADE)
     n_neighbors = models.IntegerField(
         help_text="Number of neighbors to use in KNN", default=5
     )
