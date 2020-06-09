@@ -48,7 +48,9 @@ INSTALLED_APPS = [
     "constance",
     "constance.backends.database",
     "corsheaders",
+    "backend.apps.core",
     "backend.apps.users",
+    "backend.apps.entities",
     "backend.apps.datamodel",
 ]
 
@@ -140,6 +142,8 @@ REST_FRAMEWORK = {
     ],
 }
 
+# Constance config
+
 CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
 
 CONSTANCE_CONFIG = {
@@ -153,4 +157,63 @@ CONSTANCE_CONFIG = {
     "FIWARE_SERVICEPATH": ("/", "FIWARE Service Path"),
 }
 
+# CORS config
+
 CORS_ORIGIN_ALLOW_ALL = True
+
+# Swagger settings
+
+SWAGGER_SETTINGS = {
+    "USE_SESSION_AUTH": False,
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
+    },
+}
+
+# Logging configuration
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s"
+        },
+        "simple": {"format": "%(levelname)s %(message)s"},
+    },
+    "filters": {"require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}},
+    "handlers": {
+        "null": {"level": "DEBUG", "class": "logging.NullHandler"},
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+        "log_file": {
+            "level": "DEBUG",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join("logs/django.log"),
+            "maxBytes": 16777216,
+            "formatter": "verbose",
+        },
+        "mail_admins": {
+            "level": "ERROR",
+            "filters": ["require_debug_false"],
+            "class": "django.utils.log.AdminEmailHandler",
+            "include_html": True,
+        },
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["mail_admins"],
+            "level": "ERROR",
+            "propagate": True,
+        },
+        "backend.apps": {
+            "handlers": ["log_file"],
+            "level": "INFO",
+            "propagate": True,
+        },
+    },
+    "root": {"handlers": ["console", "mail_admins"], "level": "INFO"},
+}
