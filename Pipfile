@@ -16,7 +16,7 @@ django-cors-headers = "*"
 django-constance = "*"
 django-picklefield = "*"
 python-dotenv = "*"
-djongo = "*"
+psycopg2 = "*"
 
 [requires]
 python_version = "3.8"

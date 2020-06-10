@@ -44,6 +44,9 @@ class OrionClient(object):
         Args:
             urn (str): the urn of the entity to get. Defaults to None.
 
+        Raises:
+            OrionNotAvailable: if Orion Context Broker is not available.
+
         Returns:
             dict: with the entity or entities data.
         """
@@ -81,7 +84,7 @@ class OrionNotAvailable(APIException):
 
 class BlackboxClient(object):
     """A client class to connect with the Blackbox Anomaly Detection API
-    
+
     Args:
         blackbox_host (str): the Blackbox host. If the argument is not passed,
             the one from the Constance configuration will be taken. Defaults to None.
@@ -95,17 +98,132 @@ class BlackboxClient(object):
         self.blackbox_host = blackbox_host if blackbox_host else config.BLACKBOX_HOST
         self.blackbox_port = blackbox_port if blackbox_port else config.BLACKBOX_PORT
 
-    def create_model(self):
-        pass
+    def create_blackbox(self, datamodel):
+        """Create a blackbox in the Anomaly Detection API.
 
-    def update_model(self):
-        pass
+        Args:
+            datamodel (backend.apps.models.DataModel): the datamodel with the related
+                info of the blackbox.
 
-    def delete_model(self):
-        pass
+        Raises:
+            AnomalyDetectionNotAvailable: if the Anomaly Detection is not available.
+            AnomalyDetectionBadRequest: if a bad request has been made to the Anomaly
+                Detection API.
+
+        Returns:
+            bool: whether the Blackbox has been created or not.
+        """
+
+        data = datamodel.get_models_columns()
+
+        if data:
+            url = f"http://{self.blackbox_host}:{self.blackbox_port}/api/v1/bb/models/{datamodel.id}"
+            payload = {"models": data["models"], "columns": data["columns"]}
+
+            try:
+                logger.info(
+                    f"Creating Blackbox {datamodel.id} in Anomaly Detection API. Payload: {payload}"
+                )
+                response = requests.post(url=url, json=payload)
+            except (requests.ConnectionError, requests.Timeout) as e:
+                logger.error(
+                    f"Could not create Blackbox {datamodel.id}. Anomaly Detection API is unavailable..."
+                )
+                raise AnomalyDetectionNotAvailable() from e
+
+            if response.status_code != 200:
+                logger.error(
+                    f"Could not create Blackbox {datamodel.id}: {response.text}"
+                )
+                raise AnomalyDetectionBadRequest()
+
+            logger.info(f"Anomaly Detection has responded: {response.text}")
+            return True
+
+        return False
+
+    def update_blackbox(self, datamodel):
+        """Update a blackbox in the Anomaly Detection API.
+
+        Args:
+            datamodel (backend.apps.models.DataModel): the datamodel with the related
+                info of the blackbox.
+
+        Raises:
+            AnomalyDetectionNotAvailable: if the Anomaly Detection is not available.
+            AnomalyDetectionBadRequest: if a bad request has been made to the Anomaly
+                Detection API.
+        """
+
+        data = datamodel.get_models_columns()
+
+        if data:
+            url = f"http://{self.blackbox_host}:{self.blackbox_port}/api/v1/bb/models/{datamodel.id}"
+            payload = {"models": data["models"], "columns": data["columns"]}
+
+            try:
+                logger.info(
+                    f"Updating Blackbox {datamodel.id} in Anomaly Detection API. Payload: {payload}"
+                )
+                response = requests.patch(url=url, json=payload)
+            except (requests.ConnectionError, requests.Timeout) as e:
+                logger.error(
+                    f"Could not update Blackbox {datamodel.id}. Anomaly Detection API is unavailable..."
+                )
+                raise AnomalyDetectionNotAvailable() from e
+
+            if response.status_code != 200:
+                logger.error(
+                    f"Could not update Blackbox {datamodel.id}: {response.text}"
+                )
+                raise AnomalyDetectionBadRequest()
+
+            logger.info(f"Anomaly Detection has responded: {response.text}")
+
+    def delete_blackbox(self, datamodel):
+        """Delete a blackbox in the Anomaly Detection API.
+
+        Args:
+            datamodel (backend.apps.models.DataModel): the datamodel with the related
+                info of the blackbox.
+
+        Raises:
+            AnomalyDetectionNotAvailable: if the Anomaly Detection is not available.
+            AnomalyDetectionBadRequest: if a bad request has been made to the Anomaly
+                Detection API.
+        """
+
+        url = f"http://{self.blackbox_host}:{self.blackbox_port}/api/v1/bb/models/{datamodel.id}"
+
+        try:
+            logger.info(f"Deleting Blackbox {datamodel.id} in Anomaly Detection API.")
+            response = requests.delete(url=url)
+        except (requests.ConnectionError, requests.Timeout) as e:
+            logger.error(
+                f"Could not delete Blackbox {datamodel.id}. Anomaly Detection API is unavailable..."
+            )
+            raise AnomalyDetectionNotAvailable() from e
+
+        logger.info(f"Anomaly Detection has responded: {response.text}")
 
     def train(self):
         pass
 
     def predict(self):
         pass
+
+
+class AnomalyDetectionNotAvailable(APIException):
+    """Raised when Anomaly Detection is not available."""
+
+    status_code = 504
+    default_detail = "Unable to connect to Anomaly Detection API"
+    default_code = "unable_to_connect_anomaly_detection_api"
+
+
+class AnomalyDetectionBadRequest(APIException):
+    """Raised when a bad request has been made to the Anomaly Detection API."""
+
+    status_code = 400
+    default_datail = "Bad request to Anomaly Detection API"
+    default_code = "bad_request_anomaly_detection_api"
