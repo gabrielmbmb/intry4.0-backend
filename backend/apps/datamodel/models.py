@@ -5,7 +5,6 @@ from django.core.validators import (
     int_list_validator,
     MinValueValidator,
 )
-from django.dispatch import receiver
 from django.db.models.signals import pre_delete
 from backend.apps.core import clients
 
@@ -415,7 +414,6 @@ class DataModel(models.Model):
         return None
 
 
-@receiver(pre_delete)
 def pre_delete_datamodel_handler(sender, instance, **kwargs):
     """Handles the signal post delete of a model `DataModel` requesting Anomaly
     Detection to delete a Blackbox model
@@ -423,4 +421,7 @@ def pre_delete_datamodel_handler(sender, instance, **kwargs):
     Args:
         sender (backend.apps.models.DataModel): the datamodel just deleted.
     """
-    instance.blackbox_client.delete_blackbox(sender)
+    instance.blackbox_client.delete_blackbox(instance)
+
+
+pre_delete.connect(pre_delete_datamodel_handler, sender=DataModel)
