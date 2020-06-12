@@ -293,7 +293,11 @@ class CrateClient(object):
         if self._connection is None:
             logger.info(f"Connecting to Crate at {self.crate_host}:{self.crate_port}")
             url = f"{self.crate_host}:{self.crate_port}"
-            self._connection = crate_client.connect(url)
+            try:
+                self._connection = crate_client.connect(url)
+            except Exception as e:
+                logger.error(f"Could not connect to Crate at {self.crate_host}:{self.crate_port}: {e}")
+                raise CrateNotAvailable()
             logger.info(f"Connected to Crate at {self.crate_host}:{self.crate_port}")
         else:
             logger.info("There is already a connection created to Crate")
