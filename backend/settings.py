@@ -21,7 +21,6 @@ if os.path.exists(ENV_PATH):
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
@@ -47,6 +46,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     "constance",
     "constance.backends.database",
+    "oauth2_provider",
     "corsheaders",
     "backend.apps.core",
     "backend.apps.users",
@@ -70,7 +70,7 @@ ROOT_URLCONF = "backend.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, "backend", "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -138,13 +138,23 @@ STATIC_URL = "/static/"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication"
-    ],
+        "oauth2_provider.contrib.rest_framework.OAuth2Authentication",
+    ]
 }
 
 # Constance config
 
 CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
+
+CONSTANCE_ADDITIONAL_FIELDS = {
+    "secret_password_field": [
+        "django.forms.fields.CharField",
+        {
+            "widget": "django.forms.PasswordInput",
+            "widget_kwargs": {"render_value": True},
+        },
+    ]
+}
 
 CONSTANCE_CONFIG = {
     "BLACKBOX_HOST": ("localhost", "Anomaly detection host"),
@@ -155,6 +165,17 @@ CONSTANCE_CONFIG = {
     "ORION_PORT": (1026, "Orion port"),
     "FIWARE_SERVICE": ("intry", "FIWARE Service"),
     "FIWARE_SERVICEPATH": ("/", "FIWARE Service Path"),
+}
+
+# Oauth2 settings
+
+OAUTH2_PROVIDER = {
+    "SCOPES": {
+        "read": "Read scope",
+        "write": "Write scope",
+        "introspection": "Introspect token scope",
+    },
+    "CLIENT_ID_GENERATOR_CLASS": "oauth2_provider.generators.ClientIdGenerator",
 }
 
 # CORS config
@@ -209,11 +230,7 @@ LOGGING = {
             "level": "ERROR",
             "propagate": True,
         },
-        "backend.apps": {
-            "handlers": ["log_file"],
-            "level": "INFO",
-            "propagate": True,
-        },
+        "backend.apps": {"handlers": ["log_file"], "level": "INFO", "propagate": True,},
     },
     "root": {"handlers": ["console", "mail_admins"], "level": "INFO"},
 }

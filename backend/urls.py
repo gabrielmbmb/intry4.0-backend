@@ -16,11 +16,6 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, re_path, include
 from rest_framework import permissions
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-    TokenVerifyView,
-)
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
@@ -38,16 +33,18 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # login page,
+    re_path(r"^accounts/", include("django.contrib.auth.urls")),
     # users
-    re_path("^api/v1/", include("backend.apps.users.urls")),
+    re_path(r"^api/v1/", include("backend.apps.users.urls")),
     # entities
-    re_path("^api/v1/", include("backend.apps.entities.urls")),
+    re_path(r"^api/v1/", include("backend.apps.entities.urls")),
     # datamodel
-    re_path("^api/v1/", include("backend.apps.datamodel.urls")),
-    # JWT Auth
-    path("api/v1/token/", TokenObtainPairView.as_view(), name="token-obtain-pair"),
-    path("api/v1/token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
-    path("api/v1/token/verify/", TokenVerifyView.as_view(), name="token-verify"),
+    re_path(r"^api/v1/", include("backend.apps.datamodel.urls")),
+    # Custom user info Oauth2
+    re_path(r"^o/", include("backend.apps.core.urls")),
+    # Oauth2
+    re_path(r"^o/", include("oauth2_provider.urls", namespace="oauth2_provider")),
     # swagger
     re_path(
         r"^swagger(?P<format>\.json|\.yaml)$",
