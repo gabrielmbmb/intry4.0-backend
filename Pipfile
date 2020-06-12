@@ -17,6 +17,11 @@ django-picklefield = "*"
 python-dotenv = "*"
 psycopg2 = "*"
 django-oauth-toolkit = "*"
+crate = "*"
+django-extensions = "*"
+ipython = "*"
+jupyter = "*"
+pandas = "*"
 
 [requires]
 python_version = "3.8"

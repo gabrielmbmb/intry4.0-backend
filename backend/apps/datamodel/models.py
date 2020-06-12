@@ -1,4 +1,6 @@
 import uuid
+import pytz
+import json
 import logging
 from django.db import models
 from django.core.validators import (
@@ -6,6 +8,7 @@ from django.core.validators import (
     MinValueValidator,
 )
 from django.db.models.signals import pre_delete
+from datetime import datetime
 from backend.apps.core import clients
 
 logger = logging.getLogger(__name__)
@@ -25,18 +28,32 @@ class DataModel(models.Model):
     deployed = models.BooleanField(
         help_text="Wether the model is deployed or not", default=False
     )
-    date_trained = models.DateField(
+    date_trained = models.DateTimeField(
         help_text="Date the model was trained", default=None, blank=True, null=True
     )
-    date_deployed = models.DateField(
+    date_deployed = models.DateTimeField(
         help_text="Date the model was deployed", default=None, blank=True, null=True
     )
     num_predictions = models.IntegerField(
         help_text="Number of predictions made by this model", default=0
     )
+    task_status = models.CharField(
+        help_text="URL to see the progress of training process",
+        null=True,
+        blank=True,
+        max_length=512,
+    )
 
     # sensors
     plcs = models.JSONField()
+
+    contamination = models.FloatField(
+        help_text="Contamination fraction in the training dataset",
+        default=0.1,
+        validators=[MinValueValidator(0.0)],
+        null=True,
+        blank=True,
+    )
 
     # PCA Mahalanobis
     pca_mahalanobis = models.BooleanField(null=True, blank=True, default=False)
@@ -164,7 +181,10 @@ class DataModel(models.Model):
     # K-Means
     kmeans = models.BooleanField(null=True, blank=True, default=False)
     n_clusters = models.IntegerField(
-        help_text="Number of clusters for the K-Means algorithm", null=True, blank=True,
+        help_text="Number of clusters for the K-Means algorithm",
+        default=None,
+        null=True,
+        blank=True,
     )
     max_cluster_elbow = models.IntegerField(
         help_text="Maximun number of cluster to test in the Elbow Method",
@@ -359,19 +379,11 @@ class DataModel(models.Model):
 
     # clients
     blackbox_client = clients.BlackboxClient()
-    created_in_blackbox = models.BooleanField(default=False)
+    crate_client = clients.CrateClient()
 
-    def save(self, *args, **kwargs):
-        """Custom save method in order to create the model in the Anomaly Detection API
-        before saving it."""
-        print(self.created_in_blackbox)
-
-        if not self.created_in_blackbox:
-            self.created_in_blackbox = self.blackbox_client.create_blackbox(self)
-        else:
-            self.blackbox_client.update_blackbox(self)
-
-        super(DataModel, self).save(*args, **kwargs)
+    def create_blackbox(self):
+        """Creates a Blackbox model in the Anomaly Detection API."""
+        self.blackbox_client.create_blackbox(self)
 
     def get_models_columns(self):
         """Returns a dict containing two lists, one with the columns and the other
@@ -413,6 +425,104 @@ class DataModel(models.Model):
 
         return None
 
+    def train(
+        self,
+        with_source: str,
+        n: int = None,
+        from_date: str = None,
+        to_date: str = None,
+    ):
+        """Trains the datamodel either with data from Crate or from a CSV"""
+        if not self.is_training:
+            if with_source == "db":
+                df = self.crate_client.get_data_from_plc(
+                    self.plcs, n=n, from_date=from_date, to_date=to_date
+                )
+
+            # train with data from CSV
+            else:
+                pass
+
+            train_data_json = json.loads(df.to_json(orient="split"))
+            payload = self.to_json()
+            payload["columns"] = train_data_json["columns"]
+            payload["data"] = train_data_json["data"]
+
+            self.task_status = self.blackbox_client.train(self.id, payload)
+            self.save()
+
+    def to_json(self):
+        """Gets the model as json format."""
+        json_ = {
+            "contamination": self.contamination,
+            "n_jobs": -1,
+            "pca_mahalanobis": {"n_components": self.n_components},
+            "autoencoder": {
+                "hidden_neurons": list(
+                    map(lambda x: int(x), self.hidden_neurons.split(","))
+                ),
+                "dropout_rate": self.dropout_rate,
+                "activation": self.activation,
+                "kernel_initializer": self.kernel_initializer,
+                "loss_function": self.loss_function,
+                "optimizer": self.optimizer,
+                "epochs": self.epochs,
+                "batch_size": self.batch_size,
+                "validation_split": self.validation_split,
+                "early_stopping": self.early_stopping,
+            },
+            "kmeans": {"max_cluster_elbow": self.max_cluster_elbow,},
+            "one_class_svm": {
+                "kernel": self.kernel,
+                "degree": self.degree,
+                "gamma": self.gamma,
+                "coef0": self.coef0,
+                "tol": self.tol,
+                "shrinking": self.shrinking,
+                "cache_size": self.cache_size,
+            },
+            "gaussian_distribution": {"epsilon_candidates": self.epsilon_candidates},
+            "isolation_forest": {
+                "n_estimators": self.n_estimators,
+                "max_features": self.max_features,
+                "bootstrap": self.bootstrap,
+            },
+            "knearest_neighbors": {
+                "n_neighbors": self.n_neighbors_knn,
+                "radius": self.radius,
+                "algorithm": self.algorithm_knn,
+                "leaf_size": self.leaf_size_knn,
+                "metric": self.metric_knn,
+                "p": self.p_knn,
+                "score_func": self.score_func,
+            },
+            "local_outlier_factor": {
+                "n_neighbors": self.n_neighbors_lof,
+                "algorithm": self.algorithm_lof,
+                "leaf_size": self.leaf_size_knn,
+                "metric": self.metric_knn,
+                "p": self.p_knn,
+            },
+        }
+
+        if self.n_clusters:
+            json_["kmeans"]["n_clusters"] = self.n_clusters
+
+        return json_
+
+    def set_trained(self):
+        """Sets the datamodel to the trained state."""
+        self.is_training = False
+        self.trained = True
+        self.date_trained = datetime.now(tz=pytz.UTC)
+        self.save()
+
+    def set_deployed(self):
+        """Sets the datamodel to the deployed state."""
+        self.deployed = not self.deployed
+        self.date_deployed = datetime.now(tz=pytz.UTC)
+        self.save()
+
 
 def pre_delete_datamodel_handler(sender, instance, **kwargs):
     """Handles the signal post delete of a model `DataModel` requesting Anomaly
@@ -425,3 +535,13 @@ def pre_delete_datamodel_handler(sender, instance, **kwargs):
 
 
 pre_delete.connect(pre_delete_datamodel_handler, sender=DataModel)
+
+
+class TrainFile(models.Model):
+    datamodel = models.ForeignKey(DataModel, on_delete=models.CASCADE)
+    file = models.FileField(
+        blank=False,
+        null=False,
+        help_text="A CSV training file containing the columns of the DataModel",
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)

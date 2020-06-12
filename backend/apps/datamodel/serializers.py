@@ -16,7 +16,9 @@ class DataModelSerializer(serializers.ModelSerializer):
             "date_trained",
             "date_deployed",
             "num_predictions",
+            "task_status",
             "plcs",
+            "contamination",
             "pca_mahalanobis",
             "n_components",
             "autoencoder",
@@ -69,3 +71,15 @@ class DataModelSerializer(serializers.ModelSerializer):
             "date_trained",
             "date_deployed",
         )
+
+
+class DataModelTrainSerializer(serializers.Serializer):
+    n = serializers.IntegerField(required=False)
+    from_date = serializers.DateTimeField(required=False)
+    to_date = serializers.DateTimeField(required=False)
+
+
+class TrainFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.TrainFile
+        fields = ("file",)

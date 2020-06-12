@@ -21,6 +21,9 @@ if os.path.exists(ENV_PATH):
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+MEDIA_URL = "/files/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "files")
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
@@ -48,6 +51,7 @@ INSTALLED_APPS = [
     "constance.backends.database",
     "oauth2_provider",
     "corsheaders",
+    "django_extensions",
     "backend.apps.core",
     "backend.apps.users",
     "backend.apps.entities",
@@ -160,7 +164,8 @@ CONSTANCE_CONFIG = {
     "BLACKBOX_HOST": ("localhost", "Anomaly detection host"),
     "BLACKBOX_PORT": (5678, "Anomaly detection port"),
     "CRATE_HOST": ("localhost", "CrateDB host"),
-    "CRATE_PORT": (5432, "CrateDB port"),
+    "CRATE_PORT": (4200, "CrateDB port"),
+    "CRATE_DB": ("mtintry", "CrateDB database"),
     "ORION_HOST": ("localhost", "Orion host"),
     "ORION_PORT": (1026, "Orion port"),
     "FIWARE_SERVICE": ("intry", "FIWARE Service"),
