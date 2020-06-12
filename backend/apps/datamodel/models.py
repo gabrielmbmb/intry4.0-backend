@@ -512,6 +512,7 @@ class DataModel(models.Model):
 
     def set_trained(self):
         """Sets the datamodel to the trained state."""
+        logger.info(f"Setting datamodel with id {self.id} to trained!")
         self.is_training = False
         self.trained = True
         self.date_trained = datetime.now(tz=pytz.UTC)

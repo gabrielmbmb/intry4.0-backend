@@ -131,7 +131,11 @@ class DataModelViewSet(viewsets.ModelViewSet):
             )
 
     @action(
-        detail=True, methods=["POST"], url_path="train/finished", serializer_class=None,
+        detail=True,
+        methods=["POST"],
+        url_path="train/finished",
+        serializer_class=None,
+        permission_classes=[],
     )
     def train_finished(self, request, *args, **kwargs):
         """Endpoint to get notified that the trainning of a model has ended."""
