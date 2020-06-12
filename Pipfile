@@ -10,13 +10,13 @@ black = "*"
 [packages]
 django = "*"
 djangorestframework = "*"
-djangorestframework-simplejwt = "*"
 drf-yasg = "*"
 django-cors-headers = "*"
 django-constance = "*"
 django-picklefield = "*"
 python-dotenv = "*"
 psycopg2 = "*"
+django-oauth-toolkit = "*"
 
 [requires]
 python_version = "3.8"
