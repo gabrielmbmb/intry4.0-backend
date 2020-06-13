@@ -154,6 +154,56 @@ class OrionClient(object):
                 logger.error("Bad request has been made to Orion Context Broker")
                 raise OrionBadRequest()
 
+    def create_entity(self, entity_id: str, entity_type: str, attrs: dict):
+        """Creates an entity in Orion Context Broker or updates it if is already created
+
+        Args:
+            entity_id (:obj:`str`): entity id.
+            entity_type (:obj:`str`): the type of the entity.
+            attrs (:obj:`dict`): entity attributes.
+        """
+        url = f"http://{self.orion_host}:{self.orion_port}/v2/entities"
+
+        headers = {
+            "fiware-service": self.fiware_service,
+            "fiware-servicepath": self.fiware_servicepath,
+        }
+
+        payload = {
+            "id": entity_id,
+            "type": entity_type,
+        }
+
+        payload = {**payload, **attrs}
+
+        try:
+            logger.info(
+                f"Creating entity {entity_id} in Orion at {self.orion_host}:{self.orion_port}"
+            )
+            response = requests.post(url=url, headers=headers, json=payload)
+
+            # entity already exists, so update it
+            if response.status_code == 422:
+                logger.info(
+                    f"Entity {payload['id']} already exists. Updating its attributes."
+                )
+
+                url = f"http://{self.orion_host}:{self.orion_port}/v2/entities/{entity_id}/attrs"
+
+                try:
+                    requests.post(url=url, headers=headers, json=attrs)
+                except (requests.ConnectionError, requests.Timeout) as e:
+                    logger.error(
+                        f"Could not connect with Orion Context Broker at {self.orion_host}:{self.orion_port}: {e}"
+                    )
+                    raise OrionNotAvailable()
+
+        except (requests.ConnectionError, requests.Timeout) as e:
+            logger.error(
+                f"Could not connect with Orion Context Broker at {self.orion_host}:{self.orion_port}: {e}"
+            )
+            raise OrionNotAvailable()
+
 
 class OrionNotAvailable(APIException):
     """Raised when Orion Context Broker is not available."""
@@ -341,10 +391,10 @@ class BlackboxClient(object):
         """
         url = f"http://{self.blackbox_host}:{self.blackbox_port}/api/v1/bb/models/{id}/predict"
 
-        print(payload)
-
         try:
-            logger.info(f"Using Blackbox with {id} to predict in Anomaly Detection API.")
+            logger.info(
+                f"Using Blackbox with {id} to predict in Anomaly Detection API."
+            )
             response = requests.post(url=url, json=payload)
         except (requests.ConnectionError, requests.Timeout) as e:
             logger.error(

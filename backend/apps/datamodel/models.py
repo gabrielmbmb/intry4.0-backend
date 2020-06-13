@@ -640,9 +640,7 @@ class DataModel(models.Model):
             dfs = []
             data_from_subscriptions = {}
             for (plc, data_sub) in self.data_from_subscriptions.items():
-                df = pd.DataFrame(
-                    data=data_sub["rows"], columns=data_sub["columns"]
-                )
+                df = pd.DataFrame(data=data_sub["rows"], columns=data_sub["columns"])
                 dfs.append(df)
                 data_from_subscriptions[plc] = {}
 
@@ -652,6 +650,29 @@ class DataModel(models.Model):
             self.blackbox_client.predict(self.id, payload)
 
         self.save()
+
+    def send_prediction_to_orion(self, predictions: dict):
+        """Sends the predictions received from the Anomaly Detection API to the Orion
+        Context Broker.
+
+        Args:
+            predictions (:obj:`str`): predictions made by the Anomaly Detection API.
+        """
+
+        entity_id = f"urn:ngsi-ld:AnomalyPrediction:{self.id}"
+        entity_type = "AnomalyPrediction"
+        attrs = {
+            key: {"type": "Boolean", "value": value[0]}
+            for key, value in predictions.items()
+        }
+        attrs["name"] = {
+            "type": "String",
+            "value": self.name,
+        }
+        attrs["entities"] = {"type": "Object", "value": self.plcs}
+        attrs["date"] = {"type": "DateTime", "value": datetime.now().isoformat()}
+
+        self.orion_client.create_entity(entity_id, entity_type, attrs)
 
 
 def pre_delete_datamodel_handler(sender, instance, **kwargs):

@@ -200,3 +200,16 @@ class DataModelViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    @action(
+        detail=True,
+        methods=["POST"],
+        url_path="predict/result",
+        serializer_class=None,
+        permission_classes=[],
+    )
+    def predict_result(self, request, *args, **kwargs):
+        """Receives prediction from Anomaly Detection API."""
+        datamodel = self.get_object()
+        datamodel.send_prediction_to_orion(request.data)
+        return Response(status=status.HTTP_200_OK)
