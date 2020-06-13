@@ -4,7 +4,9 @@ import pytz
 import json
 import logging
 import pandas as pd
+from constance import config
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 from django.core.validators import (
     int_list_validator,
     MinValueValidator,
@@ -379,9 +381,13 @@ class DataModel(models.Model):
         blank=True,
     )
 
+    # orion subscriptions
+    subscriptions = ArrayField(models.CharField(max_length=128), default=list)
+
     # clients
     blackbox_client = clients.BlackboxClient()
     crate_client = clients.CrateClient()
+    orion_client = clients.OrionClient()
 
     def create_blackbox(self):
         """Creates a Blackbox model in the Anomaly Detection API."""
@@ -537,7 +543,31 @@ class DataModel(models.Model):
     def set_deployed(self):
         """Sets the datamodel to the deployed state."""
         self.deployed = not self.deployed
-        self.date_deployed = datetime.now(tz=pytz.UTC)
+
+        if self.deployed:
+            self.date_deployed = datetime.now(tz=pytz.UTC)
+
+            # create subscriptions in OCB
+            notification_url = (
+                f"http://{config.SERVER_IP}/api/v1/datamodels/{self.id}/predict/"
+            )
+
+            subscriptions = []
+            for (plc, sensors) in self.plcs.items():
+                subscription = self.orion_client.create_subscription(
+                    url=notification_url, pattern=plc, conditions=sensors, throttling=5
+                )
+                subscriptions.append(subscription)
+
+            self.subscriptions = subscriptions
+
+        else:
+            self.date_deployed = None
+
+            # remove subscriptions in OCB
+            self.orion_client.delete_subscriptions(self.subscriptions)
+            self.subscriptions = []
+
         self.save()
 
     def check_csv_columns(self, file, index_column: str = None) -> bool:

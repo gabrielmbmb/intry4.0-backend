@@ -1,7 +1,6 @@
 from drf_yasg.utils import swagger_auto_schema
 from django.utils.decorators import method_decorator
 from rest_framework import viewsets, status, permissions
-from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from backend.apps.datamodel.models import DataModel, TrainFile
@@ -165,13 +164,24 @@ class DataModelViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_200_OK)
 
     @action(
-        detail=True, methods=["POST"], url_path="train/deploy", serializer_class=None,
+        detail=True, methods=["POST"], url_path="deploy", serializer_class=None,
     )
     def deploy(self, request, *args, **kwargs):
         """Deploys an Anomaly Detection Model."""
+
         datamodel = self.get_object()
-        datamodel.set_deployed()
-        return Response(status=status.HTTP_200_OK)
+
+        if datamodel.trained:
+            datamodel.set_deployed()
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(
+                data={
+                    "detail": f"The datatamodel with id {datamodel.id} is not trained. "
+                    "Cannot deploy a datamodel which is not trained."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
     @action(detail=True, methods=["POST"], serializer_class=None)
     def predict(self, request, *args, **kwargs):

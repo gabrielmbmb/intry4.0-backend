@@ -60,6 +60,9 @@ class OrionClient(object):
         }
 
         try:
+            logger.info(
+                f"Getting entitites from Orion at {self.orion_host}:{self.orion_port}"
+            )
             response = requests.get(url=url, headers=headers)
         except (requests.ConnectionError, requests.Timeout) as e:
             logger.error(
@@ -69,8 +72,87 @@ class OrionClient(object):
 
         return response.json()
 
-    def create_subscription(self, pattern: str, url: str):
-        pass
+    def create_subscription(
+        self, url: str, pattern: str, conditions: list = None, throttling: int = None
+    ) -> str:
+        """Create a subscription in the Orion Context Broker
+
+        Args:
+            url (:obj:`str`): URL where the notification will be sent.
+            pattern (:obj:`str`): entity pattern that will trigger the subscription.
+            conditions (:obj:`list`): list of conditions (attributes of the entity)
+                which will trigger the subscription. Defaults to None.
+            throttling (:obj:`int`): minimum inter-notification arrival time. Defaults
+                to None.
+        
+        Returns:
+            str: the URL with the location of the new subscription.
+        """
+
+        payload = {
+            "description": f"A subscription to send info about {pattern} to the backend",
+            "subject": {
+                "entities": [{"idPattern": pattern}],
+                "condition": {"attrs": conditions},
+            },
+            "notification": {"http": {"url": url}, "attrs": conditions},
+        }
+
+        if throttling:
+            payload["throttling"] = throttling
+
+        url = f"http://{self.orion_host}:{self.orion_port}/v2/subscriptions"
+
+        headers = {
+            "fiware-service": self.fiware_service,
+            "fiware-servicepath": self.fiware_servicepath,
+        }
+
+        try:
+            logger.info(
+                f"Creating subscription in Orion at {self.orion_host}:{self.orion_port}"
+                f" for entity {pattern} with conditions {conditions}"
+            )
+            response = requests.post(url=url, headers=headers, json=payload)
+        except (requests.ConnectionError, requests.Timeout) as e:
+            logger.error(
+                f"Could not connect with Orion Context Broker at {self.orion_host}:{self.orion_port}: {e}"
+            )
+            raise OrionNotAvailable()
+
+        if response.status_code != 201:
+            logger.error("Bad request has been made to Orion Context Broker")
+            raise OrionBadRequest()
+
+        return response.headers["Location"]
+
+    def delete_subscriptions(self, subscriptions: list):
+        """Removes the subscriptions created by this client.
+        
+        Args:
+            subscriptions (:obj:`str`): list containing location URL of subscriptions.
+        """
+
+        headers = {
+            "fiware-service": self.fiware_service,
+            "fiware-servicepath": self.fiware_servicepath,
+        }
+
+        for subscription in subscriptions:
+            url = f"http://{self.orion_host}:{self.orion_port}{subscription}"
+
+            try:
+                logger.info(f"Removing subscription in Orion at {url}")
+                response = requests.delete(url=url, headers=headers)
+            except (requests.ConnectionError, requests.Timeout) as e:
+                logger.error(
+                    f"Could not connect with Orion Context Broker at {self.orion_host}:{self.orion_port}: {e}"
+                )
+                raise OrionNotAvailable()
+
+            if response.status_code != 204:
+                logger.error("Bad request has been made to Orion Context Broker")
+                raise OrionBadRequest()
 
 
 class OrionNotAvailable(APIException):
@@ -79,6 +161,14 @@ class OrionNotAvailable(APIException):
     status_code = 504
     default_detail = "Unable to connect to Orion Context Broker"
     default_code = "unable_to_connect_ocb"
+
+
+class OrionBadRequest(APIException):
+    """Raised when a bad request has been made to Orion Context Broker."""
+
+    status_code = 504
+    default_detail = "Bad request has been made to Orion Context Broker"
+    default_code = "bad_request_ocb"
 
 
 class BlackboxClient(object):
@@ -296,7 +386,9 @@ class CrateClient(object):
             try:
                 self._connection = crate_client.connect(url)
             except Exception as e:
-                logger.error(f"Could not connect to Crate at {self.crate_host}:{self.crate_port}: {e}")
+                logger.error(
+                    f"Could not connect to Crate at {self.crate_host}:{self.crate_port}: {e}"
+                )
                 raise CrateNotAvailable()
             logger.info(f"Connected to Crate at {self.crate_host}:{self.crate_port}")
         else:
@@ -352,7 +444,7 @@ class CrateClient(object):
 
         # check wheter is a valid URN
         if not re.match(
-            "^urn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%/?#]+$", entity_urn
+            r"^urn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%/?#]+$", entity_urn
         ):
             splitted = entity_urn.split(":")
             entity_type = splitted[2].lower() + str(int(splitted[3]))
