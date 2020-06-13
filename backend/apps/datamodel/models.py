@@ -18,6 +18,9 @@ from backend.apps.core import clients
 logger = logging.getLogger(__name__)
 
 
+NOT_ATTRIBUTES_KEYS_SUBSCRIPTION = ["id", "type"]
+
+
 class DataModel(models.Model):
     """Class which holds everything related to a Blackbox Anomaly Detection model."""
 
@@ -384,6 +387,9 @@ class DataModel(models.Model):
     # orion subscriptions
     subscriptions = ArrayField(models.CharField(max_length=128), default=list)
 
+    # data from subscripitons
+    data_from_subscriptions = models.JSONField(default=dict)
+
     # clients
     blackbox_client = clients.BlackboxClient()
     crate_client = clients.CrateClient()
@@ -553,13 +559,16 @@ class DataModel(models.Model):
             )
 
             subscriptions = []
+            data_from_subscriptions = {}
             for (plc, sensors) in self.plcs.items():
                 subscription = self.orion_client.create_subscription(
                     url=notification_url, pattern=plc, conditions=sensors, throttling=5
                 )
                 subscriptions.append(subscription)
+                data_from_subscriptions[plc] = {}
 
             self.subscriptions = subscriptions
+            self.data_from_subscriptions = data_from_subscriptions
 
         else:
             self.date_deployed = None
@@ -603,6 +612,46 @@ class DataModel(models.Model):
             return True, df
 
         return False, None
+
+    def set_subscription_data_and_predict(self, data: dict):
+        """Sets subscription data and once it has received the data from all the
+        subscriptions, it sends them to the Anomaly Detection API to generate a new
+        prediction.
+
+        Args:
+            data (:obj:`str`): data from a subscription in OCB entity form.
+        """
+        entity_id = data["id"]
+
+        sub_data = {"rows": [[]], "columns": []}
+        for key in data.keys():
+            if key not in NOT_ATTRIBUTES_KEYS_SUBSCRIPTION:
+                sub_data["rows"][0].append(data[key]["value"])
+                sub_data["columns"].append(key)
+
+        # save the data from this subscription
+        data_from_subscriptions = self.data_from_subscriptions
+        if data_from_subscriptions[entity_id] == {}:
+            data_from_subscriptions[entity_id] = sub_data
+            self.data_from_subscriptions = data_from_subscriptions
+
+        # check if all data from all subscriptions has been received
+        if all([data_sub != {} for data_sub in self.data_from_subscriptions.values()]):
+            dfs = []
+            data_from_subscriptions = {}
+            for (plc, data_sub) in self.data_from_subscriptions.items():
+                df = pd.DataFrame(
+                    data=data_sub["rows"], columns=data_sub["columns"]
+                )
+                dfs.append(df)
+                data_from_subscriptions[plc] = {}
+
+            self.data_from_subscriptions = data_from_subscriptions
+            df = pd.concat(dfs, axis=1)
+            payload = json.loads(df.to_json(orient="split"))
+            self.blackbox_client.predict(self.id, payload)
+
+        self.save()
 
 
 def pre_delete_datamodel_handler(sender, instance, **kwargs):

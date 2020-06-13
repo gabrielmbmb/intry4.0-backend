@@ -84,7 +84,7 @@ class OrionClient(object):
                 which will trigger the subscription. Defaults to None.
             throttling (:obj:`int`): minimum inter-notification arrival time. Defaults
                 to None.
-        
+
         Returns:
             str: the URL with the location of the new subscription.
         """
@@ -128,7 +128,7 @@ class OrionClient(object):
 
     def delete_subscriptions(self, subscriptions: list):
         """Removes the subscriptions created by this client.
-        
+
         Args:
             subscriptions (:obj:`str`): list containing location URL of subscriptions.
         """
@@ -299,7 +299,7 @@ class BlackboxClient(object):
         """Trains a blackbox in the Anomaly Detection API.
 
         Args:
-            id (:obj:`str`): id of the model which is going to be trained.
+            id (:obj:`str`): id of the blackbox which is going to be trained.
             payload (:obj:`str`): payload for training the blackbox model.
 
         Raises:
@@ -330,8 +330,36 @@ class BlackboxClient(object):
 
         return data_response["task_status"]
 
-    def predict(self):
-        pass
+    def predict(self, id, payload):
+        """Send data to the Anomaly Detection API to generate a prediction from a
+        previous trained blackbox.
+
+        Args:
+            id (:obj:`str`): id of the blackbox which is going to be used to predict.
+            payload (:obj:`dict`): the data which is going to be used to generate a
+                prediction.
+        """
+        url = f"http://{self.blackbox_host}:{self.blackbox_port}/api/v1/bb/models/{id}/predict"
+
+        print(payload)
+
+        try:
+            logger.info(f"Using Blackbox with {id} to predict in Anomaly Detection API.")
+            response = requests.post(url=url, json=payload)
+        except (requests.ConnectionError, requests.Timeout) as e:
+            logger.error(
+                f"Could not predict with Blackbox {id}. Anomaly Detection API is unavailable: {e}"
+            )
+            raise AnomalyDetectionNotAvailable()
+
+        if response.status_code != 202:
+            logger.error(f"Could not predict with Blackbox with {id}: {response.text}")
+            raise AnomalyDetectionBadRequest()
+
+        logger.info(f"Anomaly Detection has responded: {response.text}")
+        data_response = response.json()
+
+        return data_response["task_status"]
 
 
 class AnomalyDetectionNotAvailable(APIException):

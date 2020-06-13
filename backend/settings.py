@@ -170,7 +170,7 @@ CONSTANCE_CONFIG = {
     "ORION_PORT": (1026, "Orion port"),
     "FIWARE_SERVICE": ("intry", "FIWARE Service"),
     "FIWARE_SERVICEPATH": ("/", "FIWARE Service Path"),
-    "SERVER_IP": ("172.17.0.1:8000", "The server ip")
+    "SERVER_IP": ("172.17.0.1:8000", "The server ip"),
 }
 
 # Oauth2 settings
@@ -236,7 +236,7 @@ LOGGING = {
             "level": "ERROR",
             "propagate": True,
         },
-        "backend.apps": {"handlers": ["log_file"], "level": "INFO", "propagate": True,},
+        "backend.apps": {"handlers": ["log_file"], "level": "INFO", "propagate": True},
     },
     "root": {"handlers": ["console", "mail_admins"], "level": "INFO"},
 }

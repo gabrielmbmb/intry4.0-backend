@@ -173,7 +173,13 @@ class DataModelViewSet(viewsets.ModelViewSet):
 
         if datamodel.trained:
             datamodel.set_deployed()
-            return Response(status=status.HTTP_200_OK)
+            return Response(
+                data={
+                    "detail": f"The datamodel with id {datamodel.id} is now "
+                    f"{'active' if datamodel.deployed else 'inactive'}"
+                },
+                status=status.HTTP_200_OK,
+            )
         else:
             return Response(
                 data={
@@ -183,7 +189,14 @@ class DataModelViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-    @action(detail=True, methods=["POST"], serializer_class=None)
+    @action(detail=True, methods=["POST"], serializer_class=None, permission_classes=[])
     def predict(self, request, *args, **kwargs):
-        """Receives new measures from """
-        pass
+        """Receives new measures from Orion Context Broker subscriptions."""
+        datamodel = self.get_object()
+
+        if datamodel.trained and datamodel.deployed:
+            data = request.data
+            datamodel.set_subscription_data_and_predict(data["data"][0])
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
