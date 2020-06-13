@@ -10,9 +10,7 @@ class UserManager(BaseUserManager):
     """Custom user manager required to create custom users."""
 
     def create_user(self, username, email, password=None, **kwargs):
-        """
-        Create and return a `User`.
-        """
+        """Create and return a `User`."""
         if username is None:
             raise TypeError("Users must have a username.")
 
@@ -28,11 +26,9 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, username, email, password, **kwargs):
-        """
-        Create and return a `User` with superuser role.
-        """
+        """Create and return a `User` with superuser role."""
         if password is None:
-            raise TypeError("Superusers must have a passwords.")
+            raise TypeError("Superusers must have a password.")
 
         user = self.create_user(
             username=username,

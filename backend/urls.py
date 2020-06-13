@@ -29,11 +29,18 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
+    patterns=[
+        re_path(r"^api/v1/", include("backend.apps.users.urls")),
+        # entities
+        re_path(r"^api/v1/", include("backend.apps.entities.urls")),
+        # datamodel
+        re_path(r"^api/v1/", include("backend.apps.datamodel.urls")),
+    ],
 )
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    # login page,
+    # login and logout pages,
     re_path(r"^accounts/", include("django.contrib.auth.urls")),
     # users
     re_path(r"^api/v1/", include("backend.apps.users.urls")),

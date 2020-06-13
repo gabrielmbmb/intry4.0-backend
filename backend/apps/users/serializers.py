@@ -40,6 +40,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
+        ref_name = None
         fields = [
             "id",
             "email",
@@ -76,6 +77,9 @@ class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(max_length=128, min_length=8)
     password = serializers.CharField(max_length=128, min_length=8)
     password2 = serializers.CharField(max_length=128, min_length=8)
+
+    class Meta:
+        ref_name = None
 
     def validate(self, data):
         password = data.get("password", None)
