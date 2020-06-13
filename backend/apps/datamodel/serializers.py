@@ -7,6 +7,7 @@ class DataModelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.DataModel
+        ref_name = None
         fields = (
             "id",
             "name",
@@ -78,8 +79,12 @@ class DataModelTrainSerializer(serializers.Serializer):
     from_date = serializers.DateTimeField(required=False)
     to_date = serializers.DateTimeField(required=False)
 
+    class Meta:
+        ref_name = None
+
 
 class TrainFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.TrainFile
-        fields = ("file",)
+        ref_name = None
+        fields = ("file", "index_column",)

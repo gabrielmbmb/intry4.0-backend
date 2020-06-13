@@ -1,7 +1,9 @@
+import io
 import uuid
 import pytz
 import json
 import logging
+import pandas as pd
 from django.db import models
 from django.core.validators import (
     int_list_validator,
@@ -431,8 +433,22 @@ class DataModel(models.Model):
         n: int = None,
         from_date: str = None,
         to_date: str = None,
+        train_df=None,
     ):
-        """Trains the datamodel either with data from Crate or from a CSV"""
+        """Trains the datamodel either with data from Crate or from a CSV
+
+        Args:
+            with_source (:obj:`str`): source of the training data. Valid choices are
+                'db' or 'csv'.
+            n (:obj:`int`): the number of rows to take from the database. Defaults to
+                None.
+            from_date (:obj:`str`): date from which the rows has to be taken. Defaults
+                to None.
+            to_date (:obj:`str`): date until which the rows has to be taken. Defaults to
+                None.
+            train_df (:obj:`pandas.core.frame.DataFrame`): the dataframe to perform the
+                training of the model. Defaults to None.
+        """
         if not self.is_training:
             if with_source == "db":
                 df = self.crate_client.get_data_from_plc(
@@ -441,7 +457,7 @@ class DataModel(models.Model):
 
             # train with data from CSV
             else:
-                pass
+                df = train_df
 
             train_data_json = json.loads(df.to_json(orient="split"))
             payload = self.to_json()
@@ -471,7 +487,7 @@ class DataModel(models.Model):
                 "validation_split": self.validation_split,
                 "early_stopping": self.early_stopping,
             },
-            "kmeans": {"max_cluster_elbow": self.max_cluster_elbow,},
+            "kmeans": {"max_cluster_elbow": self.max_cluster_elbow},
             "one_class_svm": {
                 "kernel": self.kernel,
                 "degree": self.degree,
@@ -524,6 +540,40 @@ class DataModel(models.Model):
         self.date_deployed = datetime.now(tz=pytz.UTC)
         self.save()
 
+    def check_csv_columns(self, file, index_column: str = None) -> bool:
+        """Checks if a CSV has all the columns necessary to train this datamodel.
+
+        Args:
+            file (django.core.files.uploadedfile.TemporaryUploadedFile): training file.
+            index_column (:obj:`str`): the name of the index column if there is one.
+                Defaults to None.
+
+        Returns:
+            tuple: containing a bool which indicates if the CSV is valid. The second
+                value is a dataframe in the case that CSV was valid or None if not.
+        """
+        if index_column:
+            df = pd.read_csv(
+                io.StringIO(file.read().decode("UTF-8")), index_col=index_column
+            )
+        else:
+            df = pd.read_csv(io.StringIO(file.read().decode("UTF-8")))
+
+        # get the columns that should be in the csv
+        columns_that_should_be_in_csv = []
+        for columns in self.plcs.values():
+            for column in columns:
+                columns_that_should_be_in_csv.append(column)
+
+        columns_csv = list(df.columns)
+
+        if all(
+            column in columns_csv for column in columns_that_should_be_in_csv
+        ) and all(column in columns_that_should_be_in_csv for column in columns_csv):
+            return True, df
+
+        return False, None
+
 
 def pre_delete_datamodel_handler(sender, instance, **kwargs):
     """Handles the signal post delete of a model `DataModel` requesting Anomaly
@@ -545,4 +595,8 @@ class TrainFile(models.Model):
         null=False,
         help_text="A CSV training file containing the columns of the DataModel",
     )
+    index_column = models.CharField(max_length=128, blank=True, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        get_latest_by = "uploaded_at"

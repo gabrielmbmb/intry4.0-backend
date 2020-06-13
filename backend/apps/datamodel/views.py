@@ -114,16 +114,37 @@ class DataModelViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             data = serializer.validated_data
 
-            # create model
-            model = TrainFile()
-            model.file = data.get("file")
-            model.datamodel = datamodel
-            model.save()
+            # check that the CSV file has the necessary columns to train the model
+            file = data.get("file")
+            index_column = data.get("index_column", None)
 
-            return Response(
-                data={"detail": f"The file {model.file} has been uploaded"},
-                status=status.HTTP_201_CREATED,
-            )
+            (csv_was_valid, df) = datamodel.check_csv_columns(file, index_column)
+            if csv_was_valid:
+                # create model
+                model = TrainFile()
+                model.file = data.get("file")
+                model.datamodel = datamodel
+                model.save()
+
+                datamodel.train(with_source="csv", train_df=df)
+
+                return Response(
+                    data={
+                        "detail": f"The file {model.file} has been uploaded and the "
+                        f"training process for datamodel with id {datamodel.id} has "
+                        "been initiated.",
+                        "task_status": datamodel.task_status,
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
+            else:
+                return Response(
+                    data={
+                        "detail": "The CSV did not contain all the columns necessary to"
+                        f" train the datamodel with id {datamodel.id}",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         else:
             return Response(
                 data={"detail": "There is no datamodel with the specified id"},
