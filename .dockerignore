@@ -1,0 +1,6 @@
+.vscode/
+logs/
+.gitignore
+*.log
+README.md
+setup.cfg

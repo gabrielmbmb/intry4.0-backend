@@ -8,7 +8,7 @@ flake8 = "*"
 black = "*"
 
 [packages]
-django = "*"
+django = "==3.1a1"
 djangorestframework = "*"
 drf-yasg = "*"
 django-cors-headers = "*"
@@ -18,9 +18,6 @@ python-dotenv = "*"
 psycopg2 = "*"
 django-oauth-toolkit = "*"
 crate = "*"
-django-extensions = "*"
-ipython = "*"
-jupyter = "*"
 pandas = "*"
 
 [requires]

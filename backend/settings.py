@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     "constance.backends.database",
     "oauth2_provider",
     "corsheaders",
-    "django_extensions",
     "backend.apps.core",
     "backend.apps.users",
     "backend.apps.entities",
