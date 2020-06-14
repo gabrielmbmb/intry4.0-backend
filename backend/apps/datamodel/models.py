@@ -683,6 +683,8 @@ class DataModel(models.Model):
         attrs["date"] = {"type": "DateTime", "value": datetime.now().isoformat()}
 
         self.orion_client.create_entity(entity_id, entity_type, attrs)
+        self.num_predictions += 1
+        self.save()
 
     def get_task_status(self):
         """Gets the status of a task in the Anomaly Detection API."""
