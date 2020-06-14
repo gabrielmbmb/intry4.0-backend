@@ -81,7 +81,15 @@ class DataModelViewSet(viewsets.ModelViewSet):
             )
 
         data = serializer.validated_data
-        datamodel.train(with_source="db", **data)
+        is_training = datamodel.train(with_source="db", **data)
+
+        if is_training:
+            return Response(
+                data={
+                    "detail": "The datamodel with id {datamodel.id} is alredy being trained"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         return Response(
             data={
@@ -125,7 +133,15 @@ class DataModelViewSet(viewsets.ModelViewSet):
                 model.datamodel = datamodel
                 model.save()
 
-                datamodel.train(with_source="csv", train_df=df)
+                is_training = datamodel.train(with_source="csv", train_df=df)
+
+                if is_training:
+                    return Response(
+                        data={
+                            "detail": "The datamodel with id {datamodel.id} is alredy being trained"
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
                 return Response(
                     data={

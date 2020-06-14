@@ -261,7 +261,7 @@ class BlackboxClient(object):
 
             try:
                 logger.info(
-                    f"Creating Blackbox {datamodel.id} in Anomaly Detection API. Payload: {payload}"
+                    f"Creating Blackbox {datamodel.id} in Anomaly Detection API. Payload: {payload}. URL: {url}"
                 )
                 response = requests.post(url=url, json=payload)
             except (requests.ConnectionError, requests.Timeout) as e:
@@ -302,7 +302,7 @@ class BlackboxClient(object):
 
             try:
                 logger.info(
-                    f"Updating Blackbox {datamodel.id} in Anomaly Detection API. Payload: {payload}"
+                    f"Updating Blackbox {datamodel.id} in Anomaly Detection API. Payload: {payload}. URL: {url}"
                 )
                 response = requests.patch(url=url, json=payload)
             except (requests.ConnectionError, requests.Timeout) as e:
@@ -335,7 +335,7 @@ class BlackboxClient(object):
         url = f"http://{self.blackbox_host}:{self.blackbox_port}/api/v1/bb/models/{datamodel.id}"
 
         try:
-            logger.info(f"Deleting Blackbox {datamodel.id} in Anomaly Detection API.")
+            logger.info(f"Deleting Blackbox {datamodel.id} in Anomaly Detection API. URL: {url}.")
             response = requests.delete(url=url)
         except (requests.ConnectionError, requests.Timeout) as e:
             logger.error(
@@ -363,7 +363,7 @@ class BlackboxClient(object):
         url = f"http://{self.blackbox_host}:{self.blackbox_port}/api/v1/bb/models/{id}/train"
 
         try:
-            logger.info(f"Training Blackbox {id} in Anomaly Detection API.")
+            logger.info(f"Training Blackbox {id} in Anomaly Detection API. URL: {url}.")
             response = requests.post(url=url, json=payload)
         except (requests.ConnectionError, requests.Timeout) as e:
             logger.error(
@@ -393,7 +393,7 @@ class BlackboxClient(object):
 
         try:
             logger.info(
-                f"Using Blackbox with {id} to predict in Anomaly Detection API."
+                f"Using Blackbox with {id} to predict in Anomaly Detection API. URL: {url}."
             )
             response = requests.post(url=url, json=payload)
         except (requests.ConnectionError, requests.Timeout) as e:
@@ -419,7 +419,7 @@ class BlackboxClient(object):
         """
 
         try:
-            logger.info("Getting task status from Anomaly Detection API.")
+            logger.info("Getting task status from Anomaly Detection API. URL: {url}.")
             response = requests.get(url=url)
         except (requests.ConnectionError, requests.Timeout) as e:
             logger.error(

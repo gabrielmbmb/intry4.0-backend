@@ -446,7 +446,7 @@ class DataModel(models.Model):
         from_date: str = None,
         to_date: str = None,
         train_df=None,
-    ):
+    ) -> bool:
         """Trains the datamodel either with data from Crate or from a CSV
 
         Args:
@@ -460,6 +460,8 @@ class DataModel(models.Model):
                 None.
             train_df (:obj:`pandas.core.frame.DataFrame`): the dataframe to perform the
                 training of the model. Defaults to None.
+        Returns:
+            bool: wether the process of training has been initiated or not.
         """
         if not self.is_training:
             if with_source == "db":
@@ -477,7 +479,14 @@ class DataModel(models.Model):
             payload["data"] = train_data_json["data"]
 
             self.task_status = self.blackbox_client.train(self.id, payload)
+            self.is_training = True
+            self.trained = False
+            self.set_deployed()
             self.save()
+
+            return True
+
+        return False
 
     def to_json(self):
         """Gets the model as json format."""
