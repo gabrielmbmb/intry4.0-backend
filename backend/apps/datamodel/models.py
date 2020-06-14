@@ -481,7 +481,8 @@ class DataModel(models.Model):
             self.task_status = self.blackbox_client.train(self.id, payload)
             self.is_training = True
             self.trained = False
-            self.set_deployed()
+            if self.deployed:
+                self.set_deployed()
             self.save()
 
             return True
