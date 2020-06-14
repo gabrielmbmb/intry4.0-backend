@@ -81,9 +81,9 @@ class DataModelViewSet(viewsets.ModelViewSet):
             )
 
         data = serializer.validated_data
-        is_training = datamodel.train(with_source="db", **data)
+        training_initiated = datamodel.train(with_source="db", **data)
 
-        if is_training:
+        if not training_initiated:
             return Response(
                 data={
                     "detail": "The datamodel with id {datamodel.id} is alredy being trained"
@@ -133,9 +133,9 @@ class DataModelViewSet(viewsets.ModelViewSet):
                 model.datamodel = datamodel
                 model.save()
 
-                is_training = datamodel.train(with_source="csv", train_df=df)
+                training_initiated = datamodel.train(with_source="csv", train_df=df)
 
-                if is_training:
+                if not training_initiated:
                     return Response(
                         data={
                             "detail": "The datamodel with id {datamodel.id} is alredy being trained"
