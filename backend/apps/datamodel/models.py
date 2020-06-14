@@ -674,6 +674,10 @@ class DataModel(models.Model):
 
         self.orion_client.create_entity(entity_id, entity_type, attrs)
 
+    def get_task_status(self):
+        """Gets the status of a task in the Anomaly Detection API."""
+        return self.blackbox_client.get_task_status(self.task_status)
+
 
 def pre_delete_datamodel_handler(sender, instance, **kwargs):
     """Handles the signal post delete of a model `DataModel` requesting Anomaly

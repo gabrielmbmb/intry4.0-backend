@@ -213,3 +213,16 @@ class DataModelViewSet(viewsets.ModelViewSet):
         datamodel = self.get_object()
         datamodel.send_prediction_to_orion(request.data)
         return Response(status=status.HTTP_200_OK)
+
+    @action(
+        detail=True,
+        methods=["GET"],
+        url_path="task_status",
+        serializer_class=None,
+        permission_classes=(permissions.IsAuthenticated,),
+    )
+    def task_status(self):
+        """Get the task status from a datamodel."""
+        datamodel = self.get_object()
+        task_status = datamodel.get_task_status()
+        return Response(data=task_status, status=status.HTTP_200_OK)

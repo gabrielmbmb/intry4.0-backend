@@ -411,6 +411,28 @@ class BlackboxClient(object):
 
         return data_response["task_status"]
 
+    def get_task_status(self, url: str) -> dict:
+        """Gets task status from Anomaly Detection API.
+
+        Returns:
+            dict: task status.
+        """
+
+        try:
+            logger.info("Getting task status from Anomaly Detection API.")
+            response = requests.get(url=url)
+        except (requests.ConnectionError, requests.Timeout) as e:
+            logger.error(
+                f"Could not get task status. Anomaly Detection API is unavailable: {e}"
+            )
+            raise AnomalyDetectionNotAvailable()
+
+        if response.status_code != 200:
+            logger.error("Could not get task status from Anomaly Detection API.")
+            raise AnomalyDetectionBadRequest()
+
+        return response.json()
+
 
 class AnomalyDetectionNotAvailable(APIException):
     """Raised when Anomaly Detection is not available."""
