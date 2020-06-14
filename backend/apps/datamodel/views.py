@@ -221,7 +221,7 @@ class DataModelViewSet(viewsets.ModelViewSet):
         serializer_class=None,
         permission_classes=(permissions.IsAuthenticated,),
     )
-    def task_status(self):
+    def task_status(self, request, *args, **kwargs):
         """Get the task status from a datamodel."""
         datamodel = self.get_object()
         task_status = datamodel.get_task_status()
