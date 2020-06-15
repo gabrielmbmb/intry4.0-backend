@@ -20,6 +20,12 @@ class UserInfo(APIView):
         else:
             grafana_role = "Viewer"
 
-        payload = {"name": full_name, "email": request.user.email, "grafana_role": grafana_role}
+        payload = {
+            "name": full_name,
+            "email": request.user.email,
+            "grafana_role": grafana_role,
+            "is_staff": request.user.is_staff,
+            "is_superuser": request.user.is_superuser,
+        }
 
         return Response(payload, status=status.HTTP_200_OK)
