@@ -8,7 +8,7 @@ class UserInfo(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request):
-        """This endpoint provides infomation to the Oauth2 external services."""
+        """This endpoint provides information to the Oauth2 external services."""
         name = request.user.name
         last_name = request.user.lastname
         full_name = name + " " + last_name
@@ -20,6 +20,12 @@ class UserInfo(APIView):
         else:
             grafana_role = "Viewer"
 
-        payload = {"name": full_name, "email": request.user.email, "grafana_role": grafana_role}
+        payload = {
+            "name": full_name,
+            "email": request.user.email,
+            "grafana_role": grafana_role,
+            "is_staff": request.user.is_staff,
+            "is_superuser": request.user.is_superuser,
+        }
 
         return Response(payload, status=status.HTTP_200_OK)
