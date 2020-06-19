@@ -21,6 +21,7 @@ class UserManager(BaseUserManager):
             username=username, email=self.normalize_email(email), **kwargs
         )
         user.set_password(password)
+        user.is_staff = kwargs.get("is_staff", False)
         user.save()
 
         return user
