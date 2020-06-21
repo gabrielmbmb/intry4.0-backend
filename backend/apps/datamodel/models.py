@@ -666,21 +666,23 @@ class DataModel(models.Model):
         Context Broker.
 
         Args:
-            predictions (:obj:`str`): predictions made by the Anomaly Detection API.
+            predictions (:obj:`dict`): predictions made by the Anomaly Detection API.
         """
 
         entity_id = f"urn:ngsi-ld:AnomalyPrediction:{self.id}"
         entity_type = "AnomalyPrediction"
         attrs = {
-            key: {"type": "Boolean", "value": value[0]}
-            for key, value in predictions.items()
+            "name": {
+                "type": "String",
+                "value": self.name
+            },
+            "entities": {"type": "Object", "value": self.plcs},
+            "date": {"type": "DateTime", "value": datetime.now().isoformat()},
+            "predictions": {
+                "type": "Object",
+                "value": predictions
+            }
         }
-        attrs["name"] = {
-            "type": "String",
-            "value": self.name,
-        }
-        attrs["entities"] = {"type": "Object", "value": self.plcs}
-        attrs["date"] = {"type": "DateTime", "value": datetime.now().isoformat()}
 
         self.orion_client.create_entity(entity_id, entity_type, attrs)
         self.num_predictions += 1
