@@ -671,11 +671,17 @@ class DataModel(models.Model):
 
         entity_id = f"urn:ngsi-ld:AnomalyPrediction:{self.id}"
         entity_type = "AnomalyPrediction"
+
+        predictions_to_orion = {}
+
+        for (key, value) in predictions.items():
+            predictions_to_orion[key] = value[0]
+
         attrs = {
             "name": {"type": "String", "value": self.name},
             "entities": {"type": "Object", "value": self.plcs},
             "date": {"type": "DateTime", "value": datetime.now().isoformat()},
-            "predictions": {"type": "Object", "value": predictions},
+            "predictions": {"type": "Object", "value": predictions_to_orion},
         }
 
         self.orion_client.create_entity(entity_id, entity_type, attrs)
