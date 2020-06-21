@@ -58,6 +58,7 @@ class UserSerializer(serializers.ModelSerializer):
             "password",
             "is_active",
             "is_staff",
+            "is_superuser",
         ]
 
     def update(self, instance, validated_data):

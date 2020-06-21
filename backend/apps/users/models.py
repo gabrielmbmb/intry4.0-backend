@@ -55,10 +55,10 @@ class User(AbstractBaseUser, PermissionsMixin):
             contacting the user.
         name (django.db.models.CharField): user real name.
         lastname (django.db.models.CharField): user real lastname.
-        is_active(django.db.models.BooleanField): indicates if the account is active. It
+        is_active (django.db.models.BooleanField): indicates if the account is active. It
             can be used when a user wants to delete its account, but its account data
             has to remain in storage. Defaults to True.
-        is_staff(django.db.models.BooleanField): flag expected by Django to know who can
+        is_staff (django.db.models.BooleanField): flag expected by Django to know who can
             log into the admin site. Defaults to False.
     """
 
