@@ -45,7 +45,7 @@ class EntitiesView(APIView):
                     {
                         "id": entity["id"],
                         "type": entity["type"],
-                        "attributes:": get_entity_attributes(entity),
+                        "attributes": get_entity_attributes(entity),
                     }
                 )
 
