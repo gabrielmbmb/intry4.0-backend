@@ -335,7 +335,9 @@ class BlackboxClient(object):
         url = f"http://{self.blackbox_host}:{self.blackbox_port}/api/v1/bb/models/{datamodel.id}"
 
         try:
-            logger.info(f"Deleting Blackbox {datamodel.id} in Anomaly Detection API. URL: {url}.")
+            logger.info(
+                f"Deleting Blackbox {datamodel.id} in Anomaly Detection API. URL: {url}."
+            )
             response = requests.delete(url=url)
         except (requests.ConnectionError, requests.Timeout) as e:
             logger.error(
@@ -622,9 +624,14 @@ class CrateClient(object):
                 query = f"""
                     SELECT
                         {",".join(plc_columns_quoted)}
-                    FROM "{self.crate_db}"."{plc_table}"
-                    ORDER BY "time_index" ASC
-                    WHERE "time_index" >= "
+                    FROM
+                        "{self.crate_db}"."{plc_table}"
+                    WHERE
+                        "time_index" >= '{from_date}'
+                    AND
+                        "time_index" <= '{to_date}'
+                    ORDER BY
+                        "time_index" ASC
                 """
 
             # query the first N rows
@@ -632,9 +639,12 @@ class CrateClient(object):
                 query = f"""
                     SELECT
                         {",".join(plc_columns_quoted)}
-                    FROM "{self.crate_db}"."{plc_table}"
-                    ORDER BY "time_index" ASC
-                    LIMIT {n}
+                    FROM
+                        "{self.crate_db}"."{plc_table}"
+                    ORDER BY
+                        "time_index" ASC
+                    LIMIT
+                        {n}
                 """
                 logger.info(f"Executing query: {query}")
 
