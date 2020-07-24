@@ -86,7 +86,8 @@ class DataModelViewSet(viewsets.ModelViewSet):
         if not training_initiated:
             return Response(
                 data={
-                    "detail": f"The datamodel with id {datamodel.id} is already being trained"
+                    "detail": f"The datamodel with id {datamodel.id} is already being "
+                    "trained or the query did not return any row."
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
