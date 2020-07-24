@@ -659,7 +659,8 @@ class CrateClient(object):
                 return None
 
             results[plcs_table[plc_table]] = {"rows": rows, "columns": columns}
-            return self._get_df(results)
+
+        return self._get_df(results)
 
 
 class CrateNotAvailable(APIException):
