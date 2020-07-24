@@ -590,7 +590,7 @@ class CrateClient(object):
         n: int = 100,
         from_date: str = None,
         to_date: str = None,
-    ) -> dict:
+    ):
         """Get historic data of PLCs.
 
         Args:
@@ -602,7 +602,8 @@ class CrateClient(object):
             to_date (:obj:`str`): date until which obtain data. Defaults to None.
 
         Returns:
-            pandas.core.frame.DataFrame: a dataframe with the data from the query.
+            pandas.core.frame.DataFrame or None: a dataframe with the data from the
+                query. None if the query returns 0 rows.
         """
 
         # This dictionary will be used to translate back from "plc_table" to "plc_entity"
@@ -650,9 +651,11 @@ class CrateClient(object):
 
             rows, columns = self._execute_query(query)
 
-            results[plcs_table[plc_table]] = {"rows": rows, "columns": columns}
-
-        return self._get_df(results)
+            if len(rows) > 0:
+                results[plcs_table[plc_table]] = {"rows": rows, "columns": columns}
+                return self._get_df(results)
+            else:
+                return None
 
 
 class CrateNotAvailable(APIException):

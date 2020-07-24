@@ -473,6 +473,9 @@ class DataModel(models.Model):
             else:
                 df = train_df
 
+            if df is None:
+                return False
+
             train_data_json = json.loads(df.to_json(orient="split"))
             payload = self.to_json()
             payload["columns"] = train_data_json["columns"]
