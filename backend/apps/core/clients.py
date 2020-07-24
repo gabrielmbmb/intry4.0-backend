@@ -651,11 +651,11 @@ class CrateClient(object):
 
             rows, columns = self._execute_query(query)
 
-            if len(rows) > 0:
-                results[plcs_table[plc_table]] = {"rows": rows, "columns": columns}
-                return self._get_df(results)
-            else:
+            if len(rows) <= 0:
                 return None
+
+            results[plcs_table[plc_table]] = {"rows": rows, "columns": columns}
+            return self._get_df(results)
 
 
 class CrateNotAvailable(APIException):
