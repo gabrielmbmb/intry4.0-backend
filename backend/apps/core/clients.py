@@ -647,7 +647,8 @@ class CrateClient(object):
                     LIMIT
                         {n}
                 """
-                logger.info(f"Executing query: {query}")
+
+            logger.info(f"Executing query: {query}")
 
             rows, columns = self._execute_query(query)
 
