@@ -651,6 +651,10 @@ class CrateClient(object):
 
             rows, columns = self._execute_query(query)
 
+            logger.info(
+                f"The query has returned {len(rows)} rows and {len(columns)} columns"
+            )
+
             if len(rows) <= 0:
                 return None
 
