@@ -62,6 +62,14 @@ class DataModel(models.Model):
         blank=True,
     )
 
+    scaler = models.CharField(
+        help_text="The scaler used to scale the data before training and predicting",
+        default="minmax",
+        max_length=48,
+        null=True,
+        blank=True,
+    )
+
     # PCA Mahalanobis
     pca_mahalanobis = models.BooleanField(null=True, blank=True, default=False)
     n_components = models.IntegerField(
@@ -496,6 +504,7 @@ class DataModel(models.Model):
         """Gets the model as json format."""
         json_ = {
             "contamination": self.contamination,
+            "scaler": self.scaler,
             "n_jobs": -1,
             "pca_mahalanobis": {"n_components": self.n_components},
             "autoencoder": {
