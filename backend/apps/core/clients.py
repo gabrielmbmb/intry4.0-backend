@@ -352,7 +352,7 @@ class BlackboxClient(object):
 
         Args:
             id (:obj:`str`): id of the blackbox which is going to be trained.
-            payload (:obj:`str`): payload for training the blackbox model.
+            payload (:obj:`dict`): payload for training the blackbox model.
 
         Raises:
             AnomalyDetectionNotAvailable: if the Anomaly Detection is not available.

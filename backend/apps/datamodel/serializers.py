@@ -87,4 +87,7 @@ class TrainFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.TrainFile
         ref_name = None
-        fields = ("file", "index_column",)
+        fields = (
+            "file",
+            "index_column",
+        )
