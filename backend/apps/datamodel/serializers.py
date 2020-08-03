@@ -20,6 +20,7 @@ class DataModelSerializer(serializers.ModelSerializer):
             "task_status",
             "plcs",
             "contamination",
+            "scaler",
             "pca_mahalanobis",
             "n_components",
             "autoencoder",
