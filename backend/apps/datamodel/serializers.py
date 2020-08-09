@@ -75,6 +75,19 @@ class DataModelSerializer(serializers.ModelSerializer):
         )
 
 
+class DatamodelPredictionSerializer(serializers.Serializer):
+    class Meta:
+        model = models.DatamodelPrediction
+        ref_name = None
+        fields = (
+            "id",
+            "datamodel",
+            "data",
+            "ack",
+            "user_ack",
+        )
+
+
 class DataModelTrainSerializer(serializers.Serializer):
     n = serializers.IntegerField(required=False)
     from_date = serializers.DateTimeField(required=False)
