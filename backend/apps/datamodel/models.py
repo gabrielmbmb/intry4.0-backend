@@ -635,6 +635,33 @@ class DataModel(models.Model):
 
         return False, None
 
+    def _all_data_from_subscriptions_received(self) -> bool:
+        """Checks if data from all subscriptions has been received
+
+        Returns:
+            bool: weather if all data has been received.
+        """
+        return all(
+            [data_sub != {} for data_sub in self.data_from_subscriptions.values()]
+        )
+
+    def _create_prediction_df(self):
+        """Creates a dataframe which contains data from Orion subscriptions to make a
+        prediction.
+
+        Returns:
+            pandas.core.frame.DataFrame: dataframe with data from subscriptions.
+        """
+        dfs = []
+        data_from_subscriptions = {}
+        for (plc, data_sub) in self.data_from_subscriptions.items():
+            df = pd.DataFrame(data=data_sub["rows"], columns=data_sub["columns"])
+            dfs.append(df)
+            data_from_subscriptions[plc] = {}
+        self.data_from_subscriptions = data_from_subscriptions
+        df = pd.concat(dfs, axis=1)
+        return df
+
     def set_subscription_data_and_predict(self, data: dict):
         """Sets subscription data and once it has received the data from all the
         subscriptions, it sends them to the Anomaly Detection API to generate a new
@@ -657,19 +684,13 @@ class DataModel(models.Model):
             data_from_subscriptions[entity_id] = sub_data
             self.data_from_subscriptions = data_from_subscriptions
 
-        # check if all data from all subscriptions has been received
-        if all([data_sub != {} for data_sub in self.data_from_subscriptions.values()]):
-            dfs = []
-            data_from_subscriptions = {}
-            for (plc, data_sub) in self.data_from_subscriptions.items():
-                df = pd.DataFrame(data=data_sub["rows"], columns=data_sub["columns"])
-                dfs.append(df)
-                data_from_subscriptions[plc] = {}
-
-            self.data_from_subscriptions = data_from_subscriptions
-            df = pd.concat(dfs, axis=1)
+        if self._all_data_from_subscriptions_received():
+            df = self._create_prediction_df()
             payload = json.loads(df.to_json(orient="split"))
+            prediction = DatamodelPrediction(datamodel=self, data=payload)
+            prediction.save()
             self.blackbox_client.predict(self.id, payload)
+            # TODO: create prediction model here
 
         self.save()
 
@@ -716,6 +737,16 @@ def pre_delete_datamodel_handler(sender, instance, **kwargs):
 
 
 pre_delete.connect(pre_delete_datamodel_handler, sender=DataModel)
+
+
+class DatamodelPrediction(models.Model):
+    """Class which holds data of a prediction made by a `DataModel`."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    datamodel = models.ForeignKey(DataModel, on_delete=models.CASCADE)
+    data = models.JSONField()
+    ack = models.BooleanField(default=True)
+    user_ack = models.CharField(max_length=128, blank=True, null=True)
 
 
 class TrainFile(models.Model):
