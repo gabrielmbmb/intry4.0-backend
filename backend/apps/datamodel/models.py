@@ -53,7 +53,6 @@ class DataModel(models.Model):
 
     # sensors
     plcs = models.JSONField()
-    dates = models.JSONField()
 
     contamination = models.FloatField(
         help_text="Contamination fraction in the training dataset",
@@ -398,6 +397,7 @@ class DataModel(models.Model):
 
     # data from subscripitons
     data_from_subscriptions = models.JSONField(default=dict)
+    dates = models.JSONField(default=dict)
 
     # clients
     blackbox_client = clients.BlackboxClient()
@@ -752,7 +752,7 @@ class DatamodelPrediction(models.Model):
     datamodel = models.ForeignKey(DataModel, on_delete=models.CASCADE)
     data = models.JSONField()
     dates = models.JSONField()
-    ack = models.BooleanField(default=True)
+    ack = models.BooleanField(default=False)
     user_ack = models.CharField(max_length=128, blank=True, null=True)
 
 
