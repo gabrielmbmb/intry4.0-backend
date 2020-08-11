@@ -683,9 +683,8 @@ class DataModel(models.Model):
         # save the data from this subscription
         if self.data_from_subscriptions[entity_id] == {}:
             # Save the time instant when the value of the sensors were updated
-            self.dates = {
-                column: data["TimeInstant"]["value"] for column in sub_data["columns"]
-            }
+            for column in sub_data["columns"]:
+                self.dates[column] = data["TimeInstant"]["value"]
             self.data_from_subscriptions[entity_id] = sub_data
 
         if self._all_data_from_subscriptions_received():
