@@ -213,7 +213,8 @@ class DataModelViewSet(viewsets.ModelViewSet):
 
         if datamodel.trained and datamodel.deployed:
             data = request.data
-            datamodel.set_subscription_data_and_predict(data["data"][0])
+            entity_data = data["data"][0]
+            datamodel.set_subscription_data_and_predict(entity_data)
             return Response(status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)

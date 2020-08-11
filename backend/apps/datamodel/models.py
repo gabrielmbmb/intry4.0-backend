@@ -18,7 +18,7 @@ from backend.apps.core import clients
 logger = logging.getLogger(__name__)
 
 
-NOT_ATTRIBUTES_KEYS_SUBSCRIPTION = ["id", "type"]
+NOT_ATTRIBUTES_KEYS_SUBSCRIPTION = ["id", "type", "TimeInstant"]
 
 
 class DataModel(models.Model):
@@ -53,6 +53,7 @@ class DataModel(models.Model):
 
     # sensors
     plcs = models.JSONField()
+    dates = models.JSONField()
 
     contamination = models.FloatField(
         help_text="Contamination fraction in the training dataset",
@@ -672,6 +673,7 @@ class DataModel(models.Model):
         """
         entity_id = data["id"]
 
+        # Get the attributes data of the subscription
         sub_data = {"rows": [[]], "columns": []}
         for key in data.keys():
             if key not in NOT_ATTRIBUTES_KEYS_SUBSCRIPTION:
@@ -679,15 +681,19 @@ class DataModel(models.Model):
                 sub_data["columns"].append(key)
 
         # save the data from this subscription
-        data_from_subscriptions = self.data_from_subscriptions
-        if data_from_subscriptions[entity_id] == {}:
-            data_from_subscriptions[entity_id] = sub_data
-            self.data_from_subscriptions = data_from_subscriptions
+        if self.data_from_subscriptions[entity_id] == {}:
+            # Save the time instant when the value of the sensors were updated
+            self.dates = {
+                column: data["TimeInstant"["value"]] for column in sub_data["columns"]
+            }
+            self.data_from_subscriptions[entity_id] = sub_data
 
         if self._all_data_from_subscriptions_received():
             df = self._create_prediction_df()
             payload = json.loads(df.to_json(orient="split"))
-            prediction = DatamodelPrediction(datamodel=self, data=payload)
+            prediction = DatamodelPrediction(
+                datamodel=self, data=payload, dates=self.dates
+            )
             prediction.save()
             self.blackbox_client.predict(self.id, payload)
             # TODO: create prediction model here
@@ -745,6 +751,7 @@ class DatamodelPrediction(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     datamodel = models.ForeignKey(DataModel, on_delete=models.CASCADE)
     data = models.JSONField()
+    dates = models.JSONField()
     ack = models.BooleanField(default=True)
     user_ack = models.CharField(max_length=128, blank=True, null=True)
 
