@@ -95,7 +95,11 @@ class OrionClient(object):
                 "entities": [{"idPattern": pattern}],
                 "condition": {"attrs": conditions},
             },
-            "notification": {"http": {"url": url}, "attrs": conditions},
+            "notification": {
+                "http": {"url": url},
+                # We want to receive also the TimeInstant attribute
+                "attrs": [*conditions, "TimeInstant"],
+            },
         }
 
         if throttling:
@@ -421,7 +425,7 @@ class BlackboxClient(object):
         """
 
         try:
-            logger.info("Getting task status from Anomaly Detection API. URL: {url}.")
+            logger.info(f"Getting task status from Anomaly Detection API. URL: {url}.")
             response = requests.get(url=url)
         except (requests.ConnectionError, requests.Timeout) as e:
             logger.error(
@@ -670,3 +674,48 @@ class CrateNotAvailable(APIException):
     status_code = 504
     default_detail = "Unable to connect to Crate DB"
     default_code = "unable_to_connect_to_crate_db"
+
+
+class NotificationClient:
+    """A client class to connect with the Socket.IO Notification backend
+
+    Args:
+        notification_host (str): the Notification Backend host. If the argument is not
+            passed,the one from the Constance configuration will be taken. Defaults to
+            None.
+        notification_port (str): the Notification Backend port. If the argument is not
+            passed, the one from the Constance configuration will be taken. Defaults to
+            None.
+    """
+
+    def __init__(
+        self, notification_host: str = None, notification_port: str = None,
+    ):
+        self.notification_host = notification_host or config.NOTIFICATION_HOST
+        self.notification_port = notification_port or config.NOTIFICATION_PORT
+
+    def send_prediction(self, prediction: dict):
+        """Sends data from a prediction to the Notification Backend
+
+        Args:
+            prediction (dict): data of a prediction.
+        """
+        url = f"http://{self.notification_host}:{self.notification_port}/api/v1/notifications/prediction"
+        try:
+            logger.info(
+                f"Sending data from prediction to the Notification Backend. Payload: {prediction}. URL: {url}"
+            )
+            requests.post(url=url, data=prediction)
+        except (requests.ConnectionError, requests.Timeout) as e:
+            logger.error(
+                f"Could not send prediction. Notification Backend is unavailable: {e}"
+            )
+            raise NotificationNotAvailable()
+
+
+class NotificationNotAvailable(Exception):
+    """Raised when the Notification Backend is not available."""
+
+    status_code = 504
+    default_detail = "Unable to connect to Notification Backend"
+    default_code = "unable_to_connect_notification_backend"
