@@ -706,7 +706,9 @@ class DataModel(models.Model):
         Args:
             predictions (:obj:`dict`): predictions made by the Anomaly Detection API.
         """
-        prediction = DatamodelPrediction.objects.get(datamodel=self, id=predictions[id])
+        prediction = DatamodelPrediction.objects.get(
+            datamodel=self, id=predictions["id"]
+        )
         logger.debug(f"Prediction is: {prediction}")
 
         entity_id = f"urn:ngsi-ld:AnomalyPrediction:{self.id}"
