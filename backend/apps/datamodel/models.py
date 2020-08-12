@@ -45,7 +45,7 @@ class DataModel(models.Model):
         help_text="Number of predictions made by this model", default=0
     )
     task_status = models.CharField(
-        help_text="URL to see the progress of training process",
+        help_text="URL to get the progress of training process",
         null=True,
         blank=True,
         max_length=512,
@@ -693,9 +693,9 @@ class DataModel(models.Model):
             prediction = DatamodelPrediction(
                 datamodel=self, data=payload, dates=self.dates
             )
-            prediction.save()
             payload["id"] = str(prediction.id)
-            self.blackbox_client.predict(self.id, payload)
+            prediction.task_status = self.blackbox_client.predict(self.id, payload)
+            prediction.save()
 
         self.save()
 
@@ -755,6 +755,12 @@ class DatamodelPrediction(models.Model):
     datamodel = models.ForeignKey(DataModel, on_delete=models.CASCADE)
     data = models.JSONField()
     dates = models.JSONField()
+    task_status = models.CharField(
+        help_text="URL to get the progress of predicting process",
+        null=True,
+        blank=True,
+        max_length=512,
+    )
     ack = models.BooleanField(default=False)
     user_ack = models.CharField(max_length=128, blank=True, null=True)
 
