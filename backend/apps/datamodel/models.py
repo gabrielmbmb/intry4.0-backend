@@ -755,6 +755,7 @@ class DatamodelPrediction(models.Model):
     datamodel = models.ForeignKey(DataModel, on_delete=models.CASCADE)
     data = models.JSONField()
     dates = models.JSONField()
+    predictions = models.JSONField(default=dict)
     task_status = models.CharField(
         help_text="URL to get the progress of predicting process",
         null=True,
