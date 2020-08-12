@@ -694,7 +694,7 @@ class DataModel(models.Model):
                 datamodel=self, data=payload, dates=self.dates
             )
             prediction.save()
-            payload["id"] = prediction.id
+            payload["id"] = str(prediction.id)
             self.blackbox_client.predict(self.id, payload)
 
         self.save()
