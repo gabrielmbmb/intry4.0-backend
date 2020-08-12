@@ -8,7 +8,7 @@ flake8 = "*"
 black = "*"
 
 [packages]
-django = "==3.1a1"
+django = "==3.0.8"
 djangorestframework = "*"
 drf-yasg = "*"
 django-cors-headers = "*"
@@ -19,6 +19,7 @@ psycopg2 = "*"
 django-oauth-toolkit = "*"
 crate = "*"
 pandas = "*"
+drf-extensions = "*"
 
 [requires]
 python_version = "3.8"
