@@ -694,8 +694,8 @@ class DataModel(models.Model):
                 datamodel=self, data=payload, dates=self.dates
             )
             prediction.save()
+            payload["id"] = prediction.id
             self.blackbox_client.predict(self.id, payload)
-            # TODO: create prediction model here
 
         self.save()
 
@@ -706,6 +706,8 @@ class DataModel(models.Model):
         Args:
             predictions (:obj:`dict`): predictions made by the Anomaly Detection API.
         """
+        prediction = DatamodelPrediction.objects.get(datamodel=self, id=predictions[id])
+        logger.debug(f"Prediction is: {prediction}")
 
         entity_id = f"urn:ngsi-ld:AnomalyPrediction:{self.id}"
         entity_type = "AnomalyPrediction"
