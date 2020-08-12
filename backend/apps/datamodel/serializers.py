@@ -75,9 +75,9 @@ class DataModelSerializer(serializers.ModelSerializer):
         )
 
 
-class DatamodelPredictionSerializer(serializers.Serializer):
+class DataModelPredictionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.DatamodelPrediction
+        model = models.DataModelPrediction
         ref_name = None
         fields = (
             "id",

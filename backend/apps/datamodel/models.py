@@ -690,7 +690,7 @@ class DataModel(models.Model):
         if self._all_data_from_subscriptions_received():
             df = self._create_prediction_df()
             payload = json.loads(df.to_json(orient="split"))
-            prediction = DatamodelPrediction(
+            prediction = DataModelPrediction(
                 datamodel=self, data=payload, dates=self.dates
             )
             payload["id"] = str(prediction.id)
@@ -706,7 +706,7 @@ class DataModel(models.Model):
         Args:
             predictions (:obj:`dict`): predictions made by the Anomaly Detection API.
         """
-        prediction = DatamodelPrediction.objects.get(
+        prediction = DataModelPrediction.objects.get(
             datamodel=self, id=predictions["id"]
         )
         logger.debug(f"Prediction is: {prediction}")
@@ -748,7 +748,7 @@ def pre_delete_datamodel_handler(sender, instance, **kwargs):
 pre_delete.connect(pre_delete_datamodel_handler, sender=DataModel)
 
 
-class DatamodelPrediction(models.Model):
+class DataModelPrediction(models.Model):
     """Class which holds data of a prediction made by a `DataModel`."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

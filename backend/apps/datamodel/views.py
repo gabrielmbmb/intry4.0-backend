@@ -4,12 +4,12 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework_extensions.mixins import NestedViewSetMixin
-from backend.apps.datamodel.models import DataModel, TrainFile, DatamodelPrediction
+from backend.apps.datamodel.models import DataModel, TrainFile, DataModelPrediction
 from backend.apps.datamodel.serializers import (
     DataModelSerializer,
     DataModelTrainSerializer,
     TrainFileSerializer,
-    DatamodelPredictionSerializer,
+    DataModelPredictionSerializer,
 )
 
 
@@ -249,6 +249,6 @@ class DataModelViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 
 
 class DatamodelPredictionViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
-    queryset = DatamodelPrediction.objects.all()
-    serializer_class = DatamodelPredictionSerializer
+    queryset = DataModelPrediction.objects.all()
+    serializer_class = DataModelPredictionSerializer
     permission_classes = (permissions.IsAuthenticated,)
