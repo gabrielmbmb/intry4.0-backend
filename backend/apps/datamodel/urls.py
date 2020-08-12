@@ -1,10 +1,12 @@
-from django.urls import re_path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework_extensions.routers import ExtendedDefaultRouter
 from backend.apps.datamodel import views
 
-router = DefaultRouter()
-router.register(r"", views.DataModelViewSet)
+router = ExtendedDefaultRouter()
+router.register(r"datamodels", views.DataModelViewSet).register(
+    r"predictions",
+    views.DatamodelPredictionViewSet,
+    basename="datamodel-predictions",
+    parents_query_lookups=["datamodel"],
+)
 
-urlpatterns = [
-    re_path(r"^datamodels/", include(router.urls)),
-]
+urlpatterns = router.urls

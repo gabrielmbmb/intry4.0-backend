@@ -83,8 +83,11 @@ class DatamodelPredictionSerializer(serializers.Serializer):
             "id",
             "datamodel",
             "data",
+            "dates",
+            "predictions",
             "ack",
             "user_ack",
+            "task_status",
         )
 
 

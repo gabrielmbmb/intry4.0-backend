@@ -3,11 +3,13 @@ from django.utils.decorators import method_decorator
 from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from backend.apps.datamodel.models import DataModel, TrainFile
+from rest_framework_extensions.mixins import NestedViewSetMixin
+from backend.apps.datamodel.models import DataModel, TrainFile, DatamodelPrediction
 from backend.apps.datamodel.serializers import (
     DataModelSerializer,
     DataModelTrainSerializer,
     TrainFileSerializer,
+    DatamodelPredictionSerializer,
 )
 
 
@@ -47,7 +49,7 @@ from backend.apps.datamodel.serializers import (
         operation_description="Removes an Anomaly Detection model."
     ),
 )
-class DataModelViewSet(viewsets.ModelViewSet):
+class DataModelViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = DataModel.objects.all()
     serializer_class = DataModelSerializer
     permission_classes = (permissions.IsAuthenticated,)
@@ -244,3 +246,9 @@ class DataModelViewSet(viewsets.ModelViewSet):
         datamodel = self.get_object()
         task_status = datamodel.get_task_status()
         return Response(data=task_status, status=status.HTTP_200_OK)
+
+
+class DatamodelPredictionViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
+    queryset = DatamodelPrediction.objects.all()
+    serializer_class = DatamodelPredictionSerializer
+    permission_classes = (permissions.IsAuthenticated,)

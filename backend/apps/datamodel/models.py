@@ -6,7 +6,7 @@ import logging
 import pandas as pd
 from constance import config
 from django.db import models
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.validators import (
     int_list_validator,
     MinValueValidator,
@@ -52,7 +52,7 @@ class DataModel(models.Model):
     )
 
     # sensors
-    plcs = models.JSONField()
+    plcs = JSONField()
 
     contamination = models.FloatField(
         help_text="Contamination fraction in the training dataset",
@@ -396,8 +396,8 @@ class DataModel(models.Model):
     subscriptions = ArrayField(models.CharField(max_length=128), default=list)
 
     # data from subscripitons
-    data_from_subscriptions = models.JSONField(default=dict)
-    dates = models.JSONField(default=dict)
+    data_from_subscriptions = JSONField(default=dict)
+    dates = JSONField(default=dict)
 
     # clients
     blackbox_client = clients.BlackboxClient()
@@ -753,9 +753,9 @@ class DatamodelPrediction(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     datamodel = models.ForeignKey(DataModel, on_delete=models.CASCADE)
-    data = models.JSONField()
-    dates = models.JSONField()
-    predictions = models.JSONField(default=dict)
+    data = JSONField()
+    dates = JSONField()
+    predictions = JSONField(default=dict)
     task_status = models.CharField(
         help_text="URL to get the progress of predicting process",
         null=True,
