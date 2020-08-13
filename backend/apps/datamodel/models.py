@@ -13,6 +13,7 @@ from django.core.validators import (
 )
 from django.db.models.signals import pre_delete
 from datetime import datetime
+from backend.apps.datamodel.serializers import DataModelPredictionSerializer
 from backend.apps.core import clients
 
 logger = logging.getLogger(__name__)
@@ -696,6 +697,7 @@ class DataModel(models.Model):
             payload["id"] = str(prediction.id)
             prediction.task_status = self.blackbox_client.predict(self.id, payload)
             prediction.save()
+            prediction.send_notification()
 
         self.save()
 
@@ -745,6 +747,7 @@ class DataModel(models.Model):
         self.num_predictions += 1
         self.save()
         prediction.send_to_orion()
+        prediction.send_notification()
 
     def get_task_status(self):
         """Gets the status of a task in the Anomaly Detection API."""
@@ -782,6 +785,7 @@ class DataModelPrediction(models.Model):
     user_ack = models.CharField(max_length=128, blank=True, null=True)
 
     orion_client = clients.OrionClient()
+    notification_client = clients.NotificationClient()
 
     def send_to_orion(self):
         """Sends the prediction to the Orion Context Broker."""
@@ -796,13 +800,21 @@ class DataModelPrediction(models.Model):
                 "type": "Object",
                 "value": {
                     column: value
-                    for (column, value) in zip(self.data["columns"], self.data["data"][0])
+                    for (column, value) in zip(
+                        self.data["columns"], self.data["data"][0]
+                    )
                 },
             },
             "dates": {"type": "Object", "value": self.dates},
             "predictions": {"type": "Object", "value": self.predictions},
         }
         self.orion_client.create_entity(entity_id, entity_type, attrs)
+
+    def send_notification(self):
+        """Sends the prediction to the Notification Backend."""
+
+        serializer = DataModelPredictionSerializer(self)
+        self.notification_client.send_prediction(serializer.data)
 
 
 class TrainFile(models.Model):

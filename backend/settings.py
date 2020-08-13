@@ -162,6 +162,8 @@ CONSTANCE_ADDITIONAL_FIELDS = {
 CONSTANCE_CONFIG = {
     "BLACKBOX_HOST": ("localhost", "Anomaly detection host"),
     "BLACKBOX_PORT": (5678, "Anomaly detection port"),
+    "NOTIFICATION_HOST": ("localhost", "Notification Backend host"),
+    "NOTIFICATION_PORT": (8678, "Notification Backend port"),
     "CRATE_HOST": ("localhost", "CrateDB host"),
     "CRATE_PORT": (4200, "CrateDB port"),
     "CRATE_DB": ("mtintry", "CrateDB database"),
@@ -169,6 +171,10 @@ CONSTANCE_CONFIG = {
     "ORION_PORT": (1026, "Orion port"),
     "FIWARE_SERVICE": ("intry", "FIWARE Service"),
     "FIWARE_SERVICEPATH": ("/", "FIWARE Service Path"),
+    "SEND_PREDICTION_NOTIFICATION": (
+        True,
+        "Weather to send the prediction to the Notification Backend",
+    ),
     "SERVER_IP": ("172.17.0.1:8000", "The server ip"),
 }
 

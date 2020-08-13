@@ -338,6 +338,8 @@ class BlackboxClient(object):
 
         url = f"http://{self.blackbox_host}:{self.blackbox_port}/api/v1/bb/models/{datamodel.id}"
 
+        # TODO: check if blackbox is deployed and remove subscriptions
+
         try:
             logger.info(
                 f"Deleting Blackbox {datamodel.id} in Anomaly Detection API. URL: {url}."
@@ -705,7 +707,7 @@ class NotificationClient:
             logger.info(
                 f"Sending data from prediction to the Notification Backend. Payload: {prediction}. URL: {url}"
             )
-            requests.post(url=url, data=prediction)
+            requests.post(url=url, json=prediction)
         except (requests.ConnectionError, requests.Timeout) as e:
             logger.error(
                 f"Could not send prediction. Notification Backend is unavailable: {e}"
