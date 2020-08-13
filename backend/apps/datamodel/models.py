@@ -789,7 +789,7 @@ class DataModelPrediction(models.Model):
         entity_id = f"urn:ngsi-ld:AnomalyPrediction:{self.id}"
         entity_type = "AnomalyPrediction"
         attrs = {
-            "DataModelID": {"type": "String", "value": self.datamodel.id},
+            "DataModelID": {"type": "String", "value": str(self.datamodel.id)},
             "DataModelName": {"type": "String", "value": self.datamodel.name},
             "Data": {"type": "Object", "value": self.data},
             "Dates": {"type": "Object", "value": self.dates},
