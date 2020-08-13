@@ -813,10 +813,30 @@ class DataModelPrediction(models.Model):
     def send_notification(self):
         """Sends the prediction to the Notification Backend."""
 
-        prediction = {
-            key: value for (key, value) in self.__dict__.items() if key != "_state"
-        }
-        self.notification_client.send_prediction(prediction)
+        self.notification_client.send_prediction(self.to_dict(["_state"]))
+
+    def to_dict(self, exclude: list = None):
+        """Serialize the class into a dict.
+
+        Args:
+            exclude(:obj:`list`): a list of str containing the keys to exclude.
+
+        Returns:
+            dict: the DataModelPrediction data.
+        """
+        to_exclude = exclude
+        if to_exclude is None:
+            to_exclude = []
+
+        data = {}
+        for (key, value) in self.__dict__.items():
+            if key not in to_exclude:
+                if type(value) is uuid.UUID:
+                    data[key] = str(value)
+                else:
+                    data[key] = value
+
+        return data
 
 
 class TrainFile(models.Model):
