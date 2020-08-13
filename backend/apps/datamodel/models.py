@@ -691,7 +691,7 @@ class DataModel(models.Model):
             df = self._create_prediction_df()
             payload = json.loads(df.to_json(orient="split"))
             prediction = DataModelPrediction(
-                datamodel=self, data=payload, dates=self.dates
+                datamodel=self, data=payload.copy(), dates=self.dates
             )
             payload["id"] = str(prediction.id)
             prediction.task_status = self.blackbox_client.predict(self.id, payload)
@@ -730,6 +730,20 @@ class DataModel(models.Model):
         self.num_predictions += 1
         self.save()
 
+    def set_prediction_results(self, data: dict):
+        """Set the results of the prediction received by the Anomaly Detection API.
+
+        Args:
+            data (:obj:`dict`): a dictionary containing the predictions and the ID of
+                the prediction.
+        """
+        prediction = DataModelPrediction.objects.get(pk=data["id"])
+        prediction.predictions = {key: value[0] for (key, value) in data if key != "id"}
+        prediction.save()
+        self.num_predictions += 1
+        self.save()
+        prediction.send_to_orion()
+
     def get_task_status(self):
         """Gets the status of a task in the Anomaly Detection API."""
         return self.blackbox_client.get_task_status(self.task_status)
@@ -764,6 +778,22 @@ class DataModelPrediction(models.Model):
     )
     ack = models.BooleanField(default=False)
     user_ack = models.CharField(max_length=128, blank=True, null=True)
+
+    orion_client = clients.OrionClient()
+
+    def send_to_orion(self):
+        """Sends the prediction to the Orion Context Broker."""
+
+        entity_id = f"urn:ngsi-ld:AnomalyPrediction:{self.id}"
+        entity_type = "AnomalyPrediction"
+        attrs = {
+            "DataModelID": {"type": "String", "value": self.datamodel.id},
+            "DataModelName": {"type": "String", "value": self.datamode.name},
+            "Data": {"type": "Object", "value": self.data},
+            "Dates": {"type": "Object", "value": self.dates},
+            "Predictions": {"type": "Object", "value": self.predictions},
+        }
+        self.orion_client.create_entity(entity_id, entity_type, attrs)
 
 
 class TrainFile(models.Model):

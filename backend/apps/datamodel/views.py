@@ -231,7 +231,7 @@ class DataModelViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     def predict_result(self, request, *args, **kwargs):
         """Receives prediction from Anomaly Detection API."""
         datamodel = self.get_object()
-        datamodel.send_prediction_to_orion(request.data)
+        datamodel.set_prediction_results(request.data)
         return Response(status=status.HTTP_200_OK)
 
     @action(
@@ -252,3 +252,9 @@ class DatamodelPredictionViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewS
     queryset = DataModelPrediction.objects.all()
     serializer_class = DataModelPredictionSerializer
     permission_classes = (permissions.IsAuthenticated,)
+
+    @action(
+        detail=True, methods=["POST"], url_path="ack",
+    )
+    def ack(self, request, *args, **kwargs):
+        pass
