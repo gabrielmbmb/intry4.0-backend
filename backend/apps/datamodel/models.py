@@ -790,17 +790,17 @@ class DataModelPrediction(models.Model):
         entity_type = "AnomalyPrediction"
 
         attrs = {
-            "DataModelID": {"type": "String", "value": str(self.datamodel.id)},
-            "DataModelName": {"type": "String", "value": self.datamodel.name},
-            "Data": {
+            "datamodel_id": {"type": "String", "value": str(self.datamodel.id)},
+            "datamodel_name": {"type": "String", "value": self.datamodel.name},
+            "data": {
                 "type": "Object",
                 "value": {
                     column: value
                     for (column, value) in zip(self.data["columns"], self.data["data"][0])
                 },
             },
-            "Dates": {"type": "Object", "value": self.dates},
-            "Predictions": {"type": "Object", "value": self.predictions},
+            "dates": {"type": "Object", "value": self.dates},
+            "predictions": {"type": "Object", "value": self.predictions},
         }
         self.orion_client.create_entity(entity_id, entity_type, attrs)
 
