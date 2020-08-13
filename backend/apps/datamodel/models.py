@@ -813,7 +813,9 @@ class DataModelPrediction(models.Model):
     def send_notification(self):
         """Sends the prediction to the Notification Backend."""
 
-        prediction = serializers.serialize('json', self)
+        prediction = {
+            key: value for (key, value) in self.__dict__.items() if key != "_state"
+        }
         self.notification_client.send_prediction(prediction)
 
 
