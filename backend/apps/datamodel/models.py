@@ -846,6 +846,7 @@ class DataModelPrediction(models.Model):
         self.ack = True
         self.user_ack = user
         self.save()
+        logger.info(f"DataModel Prediction with {self.id} ACKed by {user}.")
 
 
 class TrainFile(models.Model):
