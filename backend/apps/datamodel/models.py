@@ -796,7 +796,7 @@ class DataModelPrediction(models.Model):
                 "type": "Object",
                 "value": {
                     column: value
-                    for (column, value) in zip(self.data["columns"], self.data["data"])
+                    for (column, value) in zip(self.data["columns"], self.data["data"][0])
                 },
             },
             "Dates": {"type": "Object", "value": self.dates},
