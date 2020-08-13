@@ -738,7 +738,9 @@ class DataModel(models.Model):
                 the prediction.
         """
         prediction = DataModelPrediction.objects.get(pk=data["id"])
-        prediction.predictions = {key: value[0] for (key, value) in data if key != "id"}
+        prediction.predictions = {
+            key: value[0] for (key, value) in data.items() if key != "id"
+        }
         prediction.save()
         self.num_predictions += 1
         self.save()
