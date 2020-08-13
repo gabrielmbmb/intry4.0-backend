@@ -257,4 +257,8 @@ class DatamodelPredictionViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewS
         detail=True, methods=["POST"], url_path="ack",
     )
     def ack(self, request, *args, **kwargs):
-        pass
+        prediction = self.get_object()
+        if not prediction.ack and prediction.user_ack and prediction.predictions != {}:
+            prediction.set_ack(user=self.request.user.username)
+            return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)

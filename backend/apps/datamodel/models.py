@@ -5,7 +5,6 @@ import json
 import logging
 import pandas as pd
 from constance import config
-from django.core import serializers
 from django.db import models
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.validators import (
@@ -837,6 +836,16 @@ class DataModelPrediction(models.Model):
                     data[key] = value
 
         return data
+
+    def set_ack(self, user: str):
+        """Sets the ACK for the prediction.
+
+        Args:
+            user (:obj:`str`): the user who sent the ACK.
+        """
+        self.ack = True
+        self.user_ack = user
+        self.save()
 
 
 class TrainFile(models.Model):
