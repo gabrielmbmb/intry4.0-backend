@@ -5,6 +5,7 @@ import json
 import logging
 import pandas as pd
 from constance import config
+from django.core import serializers
 from django.db import models
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.validators import (
@@ -13,7 +14,6 @@ from django.core.validators import (
 )
 from django.db.models.signals import pre_delete
 from datetime import datetime
-from backend.apps.datamodel.serializers import DataModelPredictionSerializer
 from backend.apps.core import clients
 
 logger = logging.getLogger(__name__)
@@ -813,8 +813,8 @@ class DataModelPrediction(models.Model):
     def send_notification(self):
         """Sends the prediction to the Notification Backend."""
 
-        serializer = DataModelPredictionSerializer(self)
-        self.notification_client.send_prediction(serializer.data)
+        prediction = serializers.serialize('json', self)
+        self.notification_client.send_prediction(prediction)
 
 
 class TrainFile(models.Model):
