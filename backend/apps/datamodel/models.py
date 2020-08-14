@@ -849,6 +849,8 @@ class DataModelPrediction(models.Model):
             if key not in to_exclude:
                 if type(value) is uuid.UUID:
                     data[key] = str(value)
+                elif type(value) is datetime:
+                    data[key] = value.isoformat()
                 else:
                     data[key] = value
 
