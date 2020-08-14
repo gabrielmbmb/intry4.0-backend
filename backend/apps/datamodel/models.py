@@ -771,17 +771,33 @@ class DataModelPrediction(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     datamodel = models.ForeignKey(DataModel, on_delete=models.CASCADE)
-    data = JSONField()
-    dates = JSONField()
-    predictions = JSONField(default=dict)
+    data = JSONField(help_text="The data to be predicted")
+    dates = JSONField(help_text="When the date to be predicted was created")
+    predictions = JSONField(help_text="The predictions", default=dict)
     task_status = models.CharField(
         help_text="URL to get the progress of predicting process",
         null=True,
         blank=True,
         max_length=512,
     )
-    ack = models.BooleanField(default=False)
-    user_ack = models.CharField(max_length=128, blank=True, null=True)
+    ack = models.BooleanField(
+        help_text="Wether the prediction has been acknowledged", default=False
+    )
+    user_ack = models.CharField(
+        help_text="The name of the user who acknowledged the prediction",
+        max_length=128,
+        blank=True,
+        null=True,
+    )
+    created_on = models.DateTimeField(
+        help_text="When the prediction was created", auto_now_add=True
+    )
+    predictions_received_on = models.DateTimeField(
+        help_text="When the predictions where received",
+        default=None,
+        null=True,
+        blank=True,
+    )
 
     orion_client = clients.OrionClient()
     notification_client = clients.NotificationClient()

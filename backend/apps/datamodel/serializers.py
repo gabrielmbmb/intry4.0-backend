@@ -88,6 +88,8 @@ class DataModelPredictionSerializer(serializers.ModelSerializer):
             "ack",
             "user_ack",
             "task_status",
+            "created_on",
+            "predictions_received_on",
         )
 
 
