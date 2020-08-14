@@ -742,6 +742,7 @@ class DataModel(models.Model):
         prediction.predictions = {
             key: value[0] for (key, value) in data.items() if key != "id"
         }
+        prediction.predictions_received_on = datetime.now(tz=pytz.UTC)
         prediction.save()
         self.num_predictions += 1
         self.save()
