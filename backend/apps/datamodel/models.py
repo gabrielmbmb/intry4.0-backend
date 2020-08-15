@@ -682,12 +682,18 @@ class DataModel(models.Model):
 
         # save the data from this subscription
         if self.data_from_subscriptions[entity_id] == {}:
+            logger.info(
+                f"Received data from {entity_id} for datamodel {self.id}. Columns: {sub_data['columns']}"
+            )
             # Save the time instant when the value of the sensors were updated
             for column in sub_data["columns"]:
                 self.dates[column] = data["TimeInstant"]["value"]
             self.data_from_subscriptions[entity_id] = sub_data
 
         if self._all_data_from_subscriptions_received():
+            logger.info(
+                f"All data received for datamodel {self.id}. Sending to Anomaly Backend..."
+            )
             df = self._create_prediction_df()
             payload = json.loads(df.to_json(orient="split"))
             prediction = DataModelPrediction(
