@@ -507,8 +507,13 @@ class DataModel(models.Model):
             "contamination": self.contamination,
             "scaler": self.scaler,
             "n_jobs": -1,
-            "pca_mahalanobis": {"n_components": self.n_components},
-            "autoencoder": {
+        }
+
+        if self.pca_mahalanobis:
+            json_["pca_mahalanobis"] = {"n_components": self.n_components}
+
+        if self.autoencoder:
+            json_["autoencoder"] = {
                 "hidden_neurons": list(
                     map(lambda x: int(x), self.hidden_neurons.split(","))
                 ),
@@ -521,9 +526,15 @@ class DataModel(models.Model):
                 "batch_size": self.batch_size,
                 "validation_split": self.validation_split,
                 "early_stopping": self.early_stopping,
-            },
-            "kmeans": {"max_cluster_elbow": self.max_cluster_elbow},
-            "one_class_svm": {
+            }
+
+        if self.kmeans:
+            json_["kmeans"] = {"max_cluster_elbow": self.max_cluster_elbow}
+            if self.n_clusters:
+                json_["kmeans"]["n_clusters"] = self.n_clusters
+
+        if self.one_class_svm:
+            json_["one_class_svm"] = {
                 "kernel": self.kernel,
                 "degree": self.degree,
                 "gamma": self.gamma,
@@ -531,14 +542,22 @@ class DataModel(models.Model):
                 "tol": self.tol,
                 "shrinking": self.shrinking,
                 "cache_size": self.cache_size,
-            },
-            "gaussian_distribution": {"epsilon_candidates": self.epsilon_candidates},
-            "isolation_forest": {
+            }
+
+        if self.gaussian_distribution:
+            json_["gaussian_distribution"] = {
+                "epsilon_candidates": self.epsilon_candidates
+            }
+
+        if self.isolation_forest:
+            json_["isolation_forest"] = {
                 "n_estimators": self.n_estimators,
                 "max_features": self.max_features,
                 "bootstrap": self.bootstrap,
-            },
-            "knearest_neighbors": {
+            }
+
+        if self.knearest_neighbors:
+            json_["knearest_neighbors"] = {
                 "n_neighbors": self.n_neighbors_knn,
                 "radius": self.radius,
                 "algorithm": self.algorithm_knn,
@@ -546,18 +565,16 @@ class DataModel(models.Model):
                 "metric": self.metric_knn,
                 "p": self.p_knn,
                 "score_func": self.score_func,
-            },
-            "local_outlier_factor": {
+            }
+
+        if self.local_outlier_factor:
+            json_["local_outlier_factor"] = {
                 "n_neighbors": self.n_neighbors_lof,
                 "algorithm": self.algorithm_lof,
                 "leaf_size": self.leaf_size_knn,
                 "metric": self.metric_knn,
                 "p": self.p_knn,
-            },
-        }
-
-        if self.n_clusters:
-            json_["kmeans"]["n_clusters"] = self.n_clusters
+            }
 
         return json_
 
