@@ -556,7 +556,7 @@ class DataModel(models.Model):
                 "bootstrap": self.bootstrap,
             }
 
-        if self.knearest_neighbors:
+        if self.knn:
             json_["knearest_neighbors"] = {
                 "n_neighbors": self.n_neighbors_knn,
                 "radius": self.radius,
@@ -567,7 +567,7 @@ class DataModel(models.Model):
                 "score_func": self.score_func,
             }
 
-        if self.local_outlier_factor:
+        if self.lof:
             json_["local_outlier_factor"] = {
                 "n_neighbors": self.n_neighbors_lof,
                 "algorithm": self.algorithm_lof,
