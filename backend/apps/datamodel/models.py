@@ -533,7 +533,7 @@ class DataModel(models.Model):
             if self.n_clusters:
                 json_["kmeans"]["n_clusters"] = self.n_clusters
 
-        if self.one_class_svm:
+        if self.ocsvm:
             json_["one_class_svm"] = {
                 "kernel": self.kernel,
                 "degree": self.degree,
