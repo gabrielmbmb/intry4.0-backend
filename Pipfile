@@ -20,6 +20,7 @@ django-oauth-toolkit = "*"
 crate = "*"
 pandas = "*"
 drf-extensions = "*"
+whitenoise = "*"
 
 [requires]
 python_version = "3.8"
